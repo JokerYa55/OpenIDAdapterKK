@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="login.css" media="screen" />
+        <script src="http://192.168.1.150:8080/auth/js/keycloak.js"></script>
+         <script src="jquery-3.2.1.js"></script>
+        <script>
+
+            var userData = {};
+            $('document').ready(function () {
+            });
+
+
+            function setCookie(name, value, options) {
+                options = options || {};
+
+                var expires = options.expires;
+
+                if (typeof expires == "number" && expires) {
+                    var d = new Date();
+                    d.setTime(d.getTime() + expires * 1000);
+                    expires = options.expires = d;
+                }
+                if (expires && expires.toUTCString) {
+                    options.expires = expires.toUTCString();
+                }
+
+                value = encodeURIComponent(value);
+
+                var updatedCookie = name + "=" + value;
+
+                for (var propName in options) {
+                    updatedCookie += "; " + propName;
+                    var propValue = options[propName];
+                    if (propValue !== true) {
+                        updatedCookie += "=" + propValue;
+                    }
+                }
+
+                document.cookie = updatedCookie;
+            }
+
+            function logoutUser() {
+                console.log("logoutUser()");
+                /*$.ajax({url: "http://192.168.1.150:8080/video-app/logout-servlet", success: function (result) {
+                    }});
+                $.ajax({url: "http://192.168.1.150:8080/video-app/logout-servlet", success: function (result) {
+                    }});*/
+                try {
+                    console.log("kk.logout");
+                    keycloak.logout();
+                    console.log("postMessage");
+                    top.postMessage('logout', '*');
+                    setCookie("KC_RESTART", "", null);
+                    setCookie("JSESSIONID", "", null);
+                } catch (err)
+                {
+                    console.log(err);
+                    top.postMessage('refresh', '*');
+                }
+
+
+            }
+
+            function loginUser() {
+                console.log("loginUser()");
+                keycloak.login();
+                console.log("login");
+            }
+
+            function loadProfile() {
+                keycloak.loadUserProfile().success(function (profile) {
+                    output(profile);
+                }).error(function () {
+                    output('Failed to load profile');
+                });
+            }
+            function loadUserInfo() {
+                keycloak.loadUserInfo().success(function (userInfo) {
+                    //output(userInfo);
+                    console.log(userInfo)
+                    userData = userInfo;
+                    top.postMessage('ok', '*');
+                    top.postMessage(userData, '*');
+                    if (userInfo.middlename == undefined)
+                        userInfo.middlename = '';
+                    if (userInfo.given_name == undefined)
+                        userInfo.given_name = '';
+                    if (userInfo.family_name == undefined)
+                        userInfo.family_name = '';
+                    document.getElementById('output').innerHTML = userInfo.family_name + ' ' + userInfo.given_name + ' ' + userInfo.middlename;
+                    return userData;
+                }).error(function () {
+                    console.log('Failed to load user info');
+                    top.postMessage('refresh', '*');
+                });
+            }
+            function refreshToken(minValidity) {
+                keycloak.updateToken(minValidity).success(function (refreshed) {
+                    if (refreshed) {
+                        output(keycloak.tokenParsed);
+                    } else {
+                        output('Token not refreshed, valid for ' + Math.round(keycloak.tokenParsed.exp + keycloak.timeSkew - new Date().getTime() / 1000) + ' seconds');
+                    }
+                }).error(function () {
+                    output('Failed to refresh token');
+                });
+            }
+            function showExpires() {
+                if (!keycloak.tokenParsed) {
+                    output("Not authenticated");
+                    return;
+                }
+                var o = 'Token Expires:\t\t' + new Date((keycloak.tokenParsed.exp + keycloak.timeSkew) * 1000).toLocaleString() + '\n';
+                o += 'Token Expires in:\t' + Math.round(keycloak.tokenParsed.exp + keycloak.timeSkew - new Date().getTime() / 1000) + ' seconds\n';
+                if (keycloak.refreshTokenParsed) {
+                    o += 'Refresh Token Expires:\t' + new Date((keycloak.refreshTokenParsed.exp + keycloak.timeSkew) * 1000).toLocaleString() + '\n';
+                    o += 'Refresh Expires in:\t' + Math.round(keycloak.refreshTokenParsed.exp + keycloak.timeSkew - new Date().getTime() / 1000) + ' seconds';
+                }
+                output(o);
+            }
+            function output(data) {
+                if (typeof data === 'object') {
+                    data = JSON.stringify(data, null, ' ');
+                }
+                console.log(data);
+                // document.getElementById('output').innerHTML = data;
+            }
+            function event(event) {
+                // var e = document.getElementById('events').innerHTML;
+                // document.getElementById('events').innerHTML = new Date().toLocaleString() + "\t" + event + "\n" + e;
+                console.log(event);
+            }
+            var keycloak = Keycloak();
+            keycloak.onAuthSuccess = function () {
+                event('Auth Success');
+            };
+            keycloak.onAuthError = function (errorData) {
+                event("Auth Error: " + JSON.stringify(errorData));
+            };
+            keycloak.onAuthRefreshSuccess = function () {
+                event('Auth Refresh Success');
+            };
+            keycloak.onAuthRefreshError = function () {
+                event('Auth Refresh Error');
+            };
+            keycloak.onAuthLogout = function () {
+                top.postMessage('logout', '*');
+                event('Auth Logout');
+                location.reload();
+            };
+            keycloak.onTokenExpired = function () {
+                event('Access token expired.');
+            };
+
+            function findGetParameter(parameterName) {
+                var result = null,
+                        tmp = [];
+                location.search
+                        .substr(1)
+                        .split("&")
+                        .forEach(function (item) {
+                            tmp = item.split("=");
+                            if (tmp[0] === parameterName)
+                                result = decodeURIComponent(tmp[1]);
+                        });
+                return result;
+            }
+
+            function inIframe() {
+                try {
+                    return window.self !== window.top;
+                } catch (e) {
+                    return true;
+                }
+            }
+
+            function setProfileLink()
+            {
+                mainframe = findGetParameter("main");
+                plink = document.getElementById("profilelink");
+                if (plink != null)
+                    plink.href = plink.href + encodeURIComponent('?main=' + mainframe);
+            }
+
+
+
+
+            if (!inIframe())
+                window.location = findGetParameter("main");
+            else
+            {
+                window.onload = setProfileLink;
+            }
+
+            function checkauth()
+            {
+                // Flow can be changed to 'implicit' or 'hybrid', but then client must enable implicit flow in admin console too
+                var initOptions = {
+                    responseMode: 'fragment',
+                    flow: 'standard'
+                };
+                keycloak.init(initOptions).success(function (authenticated) {
+                    output('Init Success (' + (authenticated ? 'Authenticated' : 'Not Authenticated') + ')');
+                    console.log('Authenticated:' + authenticated);
+                    if (authenticated)
+                    {
+                        console.log("Yes");
+                        top.postMessage('logout', '*');
+                        top.postMessage('refresh', '*');
+                        document.getElementById("loginbtn").style.display = 'none';
+                        loadUserInfo();
+                    } else {
+                        console.log("No");
+                        top.postMessage('logout', '*');
+                        document.getElementById("logoutbtn").style.display = 'none';
+                        document.getElementById("profilelink").style.display = 'none';
+                        loginUser();
+                    }
+                    //console.log(loadUserInfo());
+                }).error(function () {
+                    output('Init Error');
+                });
+            }
+
+            checkauth();
+        </script>
+    </head>
+    <body>
+        <pre id="output"></pre>
+
+        <div class="ssoframe" >
+            <button id="loginbtn" onclick="loginUser()">Войти</button>
+            <button id="logoutbtn" onclick="logoutUser()">Выйти</button>
+
+            <!--
+            <button onclick="keycloak.register()">Регистрация</button>
+            <button onclick="refreshToken(9999)">Refresh Token</button>
+            <button onclick="refreshToken(30)">Refresh Token (if <30s validity)</button>
+            <button onclick="loadProfile()">Get Profile</button>
+            <button onclick="loadUserInfo()">Get User Info</button>
+            <button onclick="output(keycloak.tokenParsed)">Show Token</button>
+            <button onclick="output(keycloak.refreshTokenParsed)">Show Refresh Token</button>
+            <button onclick="output(keycloak.idTokenParsed)">Show ID Token</button>
+            <button onclick="showExpires()">Show Expires</button>
+            <button onclick="output(keycloak)">Show Details</button>
+            <button onclick="output(keycloak.createLoginUrl())">Show Login URL</button>
+            <button onclick="output(keycloak.createLogoutUrl())">Show Logout URL</button>
+            <button onclick="output(keycloak.createRegisterUrl())">Show Register URL</button>
+            -->
+            <a id="profilelink" href="https://192.168.1.150:8080/auth/realms/photoz/account/?main=http://192.168.1.150:8080/demoAuthWAR-1/login.html.html" >Редактировать профиль</a>
+        </div>
+
+
+        <!--
+        <pre style="background-color: #ddd; border: 1px solid #ccc; padding: 10px; word-wrap: break-word; white-space: pre-wrap;" id="events"></pre>
+        -->
+
+
+    </body>
+</html>

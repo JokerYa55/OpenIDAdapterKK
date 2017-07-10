@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>SSO-DEMO1</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" type="text/css" href="login.css" media="screen" />
+        <script src="jquery-3.2.1.js"></script>
+        <script src="http://192.168.1.150:8080/auth/js/keycloak.js"></script>
+        <script>
+            $(document).ready(function () {
+                window.addEventListener("message", function (e) {
+                    console.log("e.data = ");
+                    console.log(e.data);
+                    $("#idInfo").val(e.data);
+                    if (e.data === 'logout') {
+                        $("#idContent").html("Пожалуйста, авторизуйтесь.");
+                    } else if (e.data === 'refresh') {
+                        console.log($("#idContent"));
+                        $("#idContent").empty();
+                        $("#idContent").html('<div id="loading">Загрузка...</div>');
+                        console.log($("#idContent"));
+                        /*var iframe = document.createElement('iframe');
+                        iframe.src = 'http://192.168.1.150:8080/video-app/video-list-servlet';
+                        iframe.className = 'invisible';
+                        document.body.appendChild(iframe);
+                        console.log('iframe.contentWindow =', iframe.contentWindow);
+                        */
+                        setTimeout(function () {
+                            $("#idContent").load("http://192.168.1.150:8080/video-app/video-list-servlet");
+                        }, 2500);
+                    } else {
+                        // $("#idUserInfo").html(e.data);
+                    }
+                }, false);
+            });
+        </script>
+    </head>
+    <body>
+        <input type="text" id="idInfo" value="111111"/>
+        <div id="ssoframe" >
+            <iframe id="ssoframe1" frameborder="1" height="800px" width="650px" src="frame.html" ></iframe>
+        </div>
+        <div id="idContent">
+        </div>
+        <div id="idUserInfo">
+        </div>
+
+
+    </body>
+</html>
