@@ -13,7 +13,7 @@
             var accessToken;
             var realm = "videomanager";
             var clientId = "video-app";
-            var keycloak = Keycloak();
+            //var keycloak = Keycloak();
 
 
             /** возвращает cookie с именем name, если есть, если нет, то undefined
@@ -65,13 +65,13 @@
              * Загрузить профиль
              * @returns {undefined}
              */
-            function loadProfile() {
+            /*function loadProfile() {
                 keycloak.loadUserProfile().success(function (profile) {
                     output(profile);
                 }).error(function () {
                     output('Failed to load profile');
                 });
-            }
+            }*/
 
             function setCookie(name, value, options) {
                 options = options || {};
@@ -106,7 +106,7 @@
             {
                 ///realms/master/protocol/openid-connect/logout
                 console.log("userNoAuth()");
-                console.log(accessToken);
+                //console.log(accessToken);
                 //var realm = "Videomanager";
                 $.ajax({
                     url: "http://192.168.1.150:8080/auth/realms/" + realm + "/protocol/openid-connect/logout",
@@ -231,7 +231,7 @@
             }
 
 
-            function test() {
+            /*function test() {
 
                 console.log(keycloak);
                 keycloak.init({onLoad: 'login-required'}).success(function (authenticated) {
@@ -241,7 +241,7 @@
                     alert('failed to initialize');
                 });
 
-            }
+            }*/
         </script>    
 
     </head>
@@ -284,9 +284,7 @@
 
                     <input type="button" value="Информация" onclick="getUserInfo();"/> 
                 </form>
-            </div>
-            <button onclick="test();">Connect</button>            
-
+            </div>           
         </div>
         <div id="content">
             <table id="idDataTable">
