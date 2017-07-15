@@ -3,8 +3,163 @@
     <head>
         <title>Start Page</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <link rel="stylesheet" type="text/css" href="login.css" media="screen" />
+        <script src="http://192.168.1.150:8080/auth/js/keycloak.js"></script>
+        <script src="jquery-3.2.1.js"></script>
+        <script>
+
+            var keycloak = Keycloak();
+
+            function getToken() {
+                $.post("http://192.168.1.150:8080/auth/realms/videomanager/protocol/openid-connect/token",
+                        {client_id: "video-app",
+                            password: "123",
+                            username: "appuser",
+                            grant_type: "password"})
+                        .done(function (data) {
+                            console.log(data);
+                        });
+            }
+
+            function getUserInfo() {
+                console.log("getUserInfo()");
+                $.ajax({
+                    type: "POST",
+                    beforeSend: function (request) {
+                        request.setRequestHeader("Authority", authorizationToken);
+                    },
+                    url: "entities",
+                    data: "json=" + escape(JSON.stringify(createRequestObject)),
+                    processData: false,
+                    success: function (msg) {
+                        $("#results").append("The result =" + StringifyPretty(msg));
+                    }
+                });
+
+            }
+
+            function loginUser() {
+                console.log("loginUser()");
+                //keycloak.login();
+                getToken();
+                console.log("login");
+            }
+
+            function checkauth()
+            {
+                // Flow can be changed to 'implicit' or 'hybrid', but then client must enable implicit flow in admin console too
+                var initOptions = {
+                    responseMode: 'fragment',
+                    flow: 'standard',
+                    onLoad: 'check-sso'
+                };
+
+                keycloak.onAuthSuccess = function () {
+                    event('Auth Success');
+                };
+                keycloak.onAuthError = function (errorData) {
+                    event("Auth Error: " + JSON.stringify(errorData));
+                };
+                keycloak.onAuthRefreshSuccess = function () {
+                    event('Auth Refresh Success');
+                };
+                keycloak.onAuthRefreshError = function () {
+                    event('Auth Refresh Error');
+                };
+                keycloak.onAuthLogout = function () {
+                    top.postMessage('logout', '*');
+                    event('Auth Logout');
+                    location.reload();
+                };
+                keycloak.onTokenExpired = function () {
+                    event('Access token expired.');
+                };
+
+                keycloak.init(initOptions).success(function (authenticated) {
+                    //output('Init Success (' + (authenticated ? 'Authenticated' : 'Not Authenticated') + ')');
+                    console.log('Authenticated:' + authenticated);
+                    if (authenticated)
+                    {
+                        console.log("Yes");
+                        top.postMessage('logout', '*');
+                        top.postMessage('refresh', '*');
+                        document.getElementById("loginbtn").style.display = 'none';
+                        loadUserInfo();
+                    } else {
+                        console.log("No");
+                        top.postMessage('logout', '*');
+                        //document.getElementById("logoutbtn").style.display = 'none';
+                        //document.getElementById("profilelink").style.display = 'none';
+                        loginUser();
+                    }
+                    //console.log(loadUserInfo());
+                }).error(function () {
+                    console.log('Init Error');
+                });
+            }
+
+            //checkauth();
+
+
+            function loadName() {
+                var xmlhttp = new XMLHttpRequest();
+                xmlhttp.withCredentials = true;
+
+                var xmlhttp = new XMLHttpRequest();
+
+                xmlhttp.onreadystatechange = function () {
+                    if (xmlhttp.readyState == XMLHttpRequest.DONE) {
+                        if (xmlhttp.status == 200) {
+                            if (xmlhttp.responseText != '')
+                            {
+                                console.log(xmlhttp.responseText);
+                                var res = xmlhttp.responseText.match(/action=\"[^\"]*\"/);
+                                var res2 = res[0].match(/\".*/);
+                                var res3 = res2[0].replace('\"', '');
+                                var res4 = res3.replace('\"', '');
+                                //var frm = document.getElementById('kc-form-login');
+                                //frm.action = res4;
+                            }
+                        } else if (xmlhttp.status == 400) {
+                            console.log('There was an error 400');
+                        } else {
+                            console.log('something else other than 200 was returned');
+                        }
+                    }
+                };
+
+                console.log("Open");
+                xmlhttp.open("GET", "http://192.168.1.150:8080/auth/realms/videomanager/protocol/openid-connect/auth?client_id=video-app&redirect_uri=http://192.168.1.150:8080/demoAuthWAR-1/redirect_fragment%3D%252F&response_mode=fragment&response_type=code&scope=openid", true);
+                console.log("Send");
+                xmlhttp.send();
+
+
+            }
+
+            //loadName();
+
+        </script>
+
     </head>
     <body>
-        <h1>Hello World!</h1>
-    </body>
+        <table>
+            <tr>
+            <div>
+                <td>Имя</td>
+                <td><input id="idName" type="text" name="f_name" value=""></td>
+            </div>
+        </tr>
+        <tr>
+        <div>
+            <td>Пароль</td>
+            <td><input id="idPassword" type="password" name="f_password" value=""></td>
+        </div>
+    </tr>
+    <tr>
+        <td colspan="2">
+            <button onclick="getToken()">Отправить</button>
+        </td>
+    </tr>
+</table>
+</body>
 </html>

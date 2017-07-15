@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Личный кабинет</title>
+
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" type="text/css" href="style.css">
+        <script src="jquery-3.2.1.js"></script>
+        <script src="http://192.168.1.150:8080/auth/js/keycloak.js"></script>
+        <script>
+            var userInfo;
+            var accessToken;
+            var realm = "videomanager";
+            var clientId = "video-app";
+            var keycloak = Keycloak();
+
+
+            /** возвращает cookie с именем name, если есть, если нет, то undefined
+             * 
+             * @param {type} name
+             * @returns {undefined}
+             */
+
+            /* function getCookie(name) {
+             var matches = document.cookie.match(new RegExp(
+             "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
+             ));
+             return matches ? decodeURIComponent(matches[1]) : undefined;
+             }*/
+            /*
+             * 
+             * @param {type} name название cookie
+             * @param {type} value значение cookie (строка)
+             * @param {type} options Объект с дополнительными свойствами для установки cookie:
+             * @returns {undefined} Время истечения cookie. Интерпретируется по-разному, в зависимости от типа:
+             * Число – количество секунд до истечения. Например, expires: 3600 – кука на час.
+             * Объект типа Date – дата истечения.
+             * Если expires в прошлом, то cookie будет удалено.
+             * Если expires отсутствует или 0, то cookie будет установлено как сессионное и исчезнет при закрытии браузера. 
+             
+             path
+             Путь для cookie.             
+             
+             domain
+             Домен для cookie.
+             
+             secure
+             Если true, то пересылать cookie только по защищенному соединению.
+             */
+
+            /**
+             * Получить данные пользователя
+             * @returns {undefined}
+             */
+            /*  function loadUserInfo() {
+             keycloak.loadUserInfo().success(function (userInfo) {
+             output(userInfo);
+             }).error(function () {
+             output('Failed to load user info');
+             });
+             }*/
+
+            /**
+             * Загрузить профиль
+             * @returns {undefined}
+             */
+            function loadProfile() {
+                keycloak.loadUserProfile().success(function (profile) {
+                    output(profile);
+                }).error(function () {
+                    output('Failed to load profile');
+                });
+            }
+
+            function setCookie(name, value, options) {
+                options = options || {};
+
+                var expires = options.expires;
+
+                if (typeof expires == "number" && expires) {
+                    var d = new Date();
+                    d.setTime(d.getTime() + expires * 1000);
+                    expires = options.expires = d;
+                }
+                if (expires && expires.toUTCString) {
+                    options.expires = expires.toUTCString();
+                }
+
+                value = encodeURIComponent(value);
+
+                var updatedCookie = name + "=" + value;
+
+                for (var propName in options) {
+                    updatedCookie += "; " + propName;
+                    var propValue = options[propName];
+                    if (propValue !== true) {
+                        updatedCookie += "=" + propValue;
+                    }
+                }
+
+                document.cookie = updatedCookie;
+            }
+
+            function userCloseAuth()
+            {
+                ///realms/master/protocol/openid-connect/logout
+                console.log("userNoAuth()");
+                console.log(accessToken);
+                //var realm = "Videomanager";
+                $.ajax({
+                    url: "http://192.168.1.150:8080/auth/realms/" + realm + "/protocol/openid-connect/logout",
+                    type: "GET",
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader('Authorization', "Bearer " + accessToken.access_token);
+                    },
+                    success: function (data) {
+                        console.log("Session close");
+                        console.log(data);
+                        accessToken = new Object();
+                        console.log(accessToken);
+                        $("#helloId").html("<p>До свидания: " + userInfo.firstName + " " + userInfo.lastName + "</p>");
+                    }
+                });
+            }
+
+            function getUserInfo() {
+                ///realms/{realm-name}/protocol/openid-connect/userinfo
+                console.log("userNoAuth()");
+                console.log(accessToken);
+                $.ajax({
+                    url: "http://192.168.1.150:8080/auth/realms/" + realm + "/protocol/openid-connect/userinfo",
+                    type: "GET",
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader('Authorization', "Bearer " + accessToken.access_token);
+                    },
+                    success: function (data) {
+                        console.log("Session close");
+                        console.log(data);
+                    }
+                });
+            }
+
+            function userAuth()
+            {
+                //var accessToken;
+                var username = $("#nameId").val();
+                var password = $("#passwordId").val();
+                //http://192.168.1.150:8080/auth/realms/master/account/
+                //http://192.168.1.150:8080/auth/admin/realms/master/users
+
+                $.post("http://192.168.1.150:8080/auth/realms/" + realm + "/protocol/openid-connect/token", {client_id: clientId, password: password, username: username, grant_type: "password"})
+                        .done(function (data) {
+                            console.log("token request");
+                            console.log(data);
+                            accessToken = data;
+
+                            $.ajax({
+                                //"http://192.168.1.150:8080/auth/video-app/realms/" + realm + "/users"
+
+                                url: "http://192.168.1.150:8080/auth/realms/" + realm + "/protocol/openid-connect/userinfo",
+                                data: {username: username},
+                                type: "GET",
+                                beforeSend: function (xhr) {
+                                    xhr.setRequestHeader('Authorization', "Bearer " + accessToken.access_token);
+                                },
+                                success: function (data) {
+                                    console.log("user request");
+                                    console.log(data);
+                                    userInfo = data;
+                                    console.log("userInfo = ");
+                                    console.log(userInfo);
+                                    $("#idId").val(userInfo.sub);
+                                    $("#nameId").val(userInfo.preferred_username);
+                                    $("#helloId").html("<p>Добро пожаловать: " + userInfo.family_name + " " + userInfo.given_name + "</p>");
+                                    setCookie("userId", userInfo.sub, null);
+                                    setCookie("userName", username, null);
+                                    // Загружаемм основной контент
+                                    $.ajax({
+                                        url: "http://192.168.1.150:8080/video-rest/list",
+                                        data: {username: userInfo.sub},
+                                        type: "GET",
+                                        beforeSend: function (xhr) {
+                                            xhr.setRequestHeader('Authorization', "Bearer " + accessToken.access_token);
+                                        },
+                                        success: function (data) {
+                                            console.log("success");
+                                            console.log("data = ");
+                                            console.log(data);
+
+                                            // Раскидываем данные по элементам
+                                            for (var item in data) {
+                                                console.log(data[item]);
+                                                var temp = data[item];
+                                                console.log($("#idDataTable>tbody:last-child"));
+                                                //$("#idDataTable>tbody:last-child").append("<tr>" + temp.title + "</td><td>" + temp.url + "</td></tr>");
+                                                var tBody = $("#idDataTable>tbody:last-child");
+                                                var tRow = $("<tr>");
+                                                var tColumn1 = $("<td>");
+                                                var tColumn2 = $("<td>");
+                                                var tUrl = $("<a>").attr('href', temp.url).attr('id', 'xyz_'+item);
+                                                tUrl.append("a");
+                                                console.log(tUrl);
+                                                /*tColumn.append(temp.title);
+                                                 tRow.append(tColumn);
+                                                 tColumn.append(tUrl);
+                                                 tRow.append(tColumn);                                                
+                                                 tBody.append(tRow);*/
+
+                                                tColumn1.append(temp.title);
+                                                tColumn2.append(tUrl);
+                                                tRow.append(tColumn1);
+                                                console.log(tRow);
+                                                tRow.append(tColumn2);
+                                                console.log(tRow);
+                                                
+                                                tBody.append(tRow);
+
+                                            }
+
+                                            //console.log("data[0] = ");
+                                            //userInfo = data[0];
+                                            //console.log(userInfo);
+                                            // Загружаемм основной контент
+                                            $("#content").append(data);
+                                        }
+                                    });
+                                }
+                            });
+                        });
+            }
+
+
+            function test() {
+
+                console.log(keycloak);
+                keycloak.init({onLoad: 'login-required'}).success(function (authenticated) {
+                    console.log(authenticated ? 'authenticated' : 'not authenticated');
+                    loadUserInfo();
+                }).error(function () {
+                    alert('failed to initialize');
+                });
+
+            }
+        </script>    
+
+    </head>
+    <body>
+        <div id="header">
+            <div id="helloId">
+
+            </div>
+        </div>
+        <div id="menu">
+            <div id="idLogin">
+                <form action="http://192.168.1.150:8080/auth/realms/master/protocol/openid-connect/token" method="POST">                
+                    <table>
+                        <tr>
+                            <td>
+                                Имя
+                            </td>
+                            <td>
+                                <input id="nameId" type="text" name="username" value="appuser"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Пароль
+                            </td>
+                            <td>
+                                <input id="passwordId" type="text" name="password" value="123"/> 
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input type="button" value="Вход" onclick="userAuth();"/>                
+                            </td>
+                            <td>
+                                <input type="button" value="Выход" onclick="userCloseAuth();"/>                
+                            </td>
+                        </tr>
+                    </table>
+                    <input id="idId" type="text" value=" ">
+
+                    <input type="button" value="Информация" onclick="getUserInfo();"/> 
+                </form>
+            </div>
+            <button onclick="test();">Connect</button>            
+
+        </div>
+        <div id="content">
+            <table id="idDataTable">
+                <tbody>
+
+                </tbody>
+            </table>
+        </div>
+
+    </body>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="jquery-3.2.1.js"></script>
+        <script src="http://192.168.1.150:8080/auth/js/keycloak.js"></script>
+        <script>
+            function test() {
+                var accessToken;
+                accessToken = $("#idToken").val();
+                console.log(accessToken);
+                $.ajax({
+                    url: "http://192.168.1.150:8080/video-rest/list",
+                    //data: {username: userInfo.sub},
+                    type: "GET",
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader('Authorization', "Bearer " + accessToken);
+                    },
+                    success: function (data) {
+                        console.log("success");
+                        console.log("data = ");
+                        console.log(data);
+                        var tBody = $("#idDataTable>tbody:last-child");
+                        tBody.empty();
+                        // Раскидываем данные по элементам
+                        for (var item in data) {
+                            console.log(data[item]);
+                            var temp = data[item];
+                            console.log($("#idDataTable>tbody:last-child"));
+                            //$("#idDataTable>tbody:last-child").append("<tr>" + temp.title + "</td><td>" + temp.url + "</td></tr>");
+                            tBody = $("#idDataTable>tbody:last-child");                            
+                            var tRow = $("<tr>");
+                            var tColumn1 = $("<td>");
+                            var tColumn2 = $("<td>");
+                            var tUrl = $("<a>").attr('href', temp.url).attr('id', 'xyz_' + item);
+                            tUrl.append("a");
+                            console.log(tUrl);
+                            /*tColumn.append(temp.title);
+                             tRow.append(tColumn);
+                             tColumn.append(tUrl);
+                             tRow.append(tColumn);                                                
+                             tBody.append(tRow);*/
+
+                            tColumn1.append(temp.title);
+                            tColumn2.append(tUrl);
+                            tRow.append(tColumn1);
+                            console.log(tRow);
+                            tRow.append(tColumn2);
+                            console.log(tRow);
+
+                            tBody.append(tRow);
+
+                        }
+
+                        //console.log("data[0] = ");
+                        //userInfo = data[0];
+                        //console.log(userInfo);
+                        // Загружаемм основной контент
+                        $("#content").append(data);
+                    }
+                });
+            }
+        </script>
+    </head>
+    <body>
+        <div>
+            <input type="text" value="test" id="idToken"/>
+            <button onclick="test()">Test</button>
+        </div>
+
+        <div id="content">
+            <table id="idDataTable">
+                <tbody>
+
+                </tbody>
+            </table>
+        </div>
+    </body>
+</html>

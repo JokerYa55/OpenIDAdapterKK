@@ -8,7 +8,7 @@ and open the template in the editor.
     <head>
         <link rel="stylesheet" type="text/css" href="login.css" media="screen" />
         <script src="http://192.168.1.150:8080/auth/js/keycloak.js"></script>
-         <script src="jquery-3.2.1.js"></script>
+        <script src="jquery-3.2.1.js"></script>
         <script>
 
             var userData = {};
@@ -48,9 +48,9 @@ and open the template in the editor.
             function logoutUser() {
                 console.log("logoutUser()");
                 /*$.ajax({url: "http://192.168.1.150:8080/video-app/logout-servlet", success: function (result) {
-                    }});
-                $.ajax({url: "http://192.168.1.150:8080/video-app/logout-servlet", success: function (result) {
-                    }});*/
+                 }});
+                 $.ajax({url: "http://192.168.1.150:8080/video-app/logout-servlet", success: function (result) {
+                 }});*/
                 try {
                     console.log("kk.logout");
                     keycloak.logout();
@@ -203,7 +203,8 @@ and open the template in the editor.
                 // Flow can be changed to 'implicit' or 'hybrid', but then client must enable implicit flow in admin console too
                 var initOptions = {
                     responseMode: 'fragment',
-                    flow: 'standard'
+                    flow: 'standard',
+                    onLoad: 'check-sso'
                 };
                 keycloak.init(initOptions).success(function (authenticated) {
                     output('Init Success (' + (authenticated ? 'Authenticated' : 'Not Authenticated') + ')');
