@@ -8,3 +8,7 @@ and open the template in the editor.
     Author     : vasil
 */
 
+#idUserInfo{
+    border: 3px solid black; /* Белая рамка */
+    border-radius: 10px; /* Радиус скругления */
+}
