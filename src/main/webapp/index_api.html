@@ -5,7 +5,7 @@
 
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" type="text/css" href="/css/style.css">
+        <link rel="stylesheet" type="text/css" href="style.css">
         <script src="jquery-3.2.1.js"></script>
         <script src="http://192.168.1.150:8080/auth/js/keycloak.js"></script>
         <script>
@@ -43,7 +43,10 @@
 
                 document.cookie = updatedCookie;
             }
-
+            
+            /** 
+             * Logout
+             */
             function userCloseAuth()
             {
                 ///realms/master/protocol/openid-connect/logout
@@ -61,7 +64,9 @@
                         console.log(data);
                         accessToken = new Object();
                         console.log(accessToken);
-                        $("#helloId").html("<p>До свидания: " + userInfo.firstName + " " + userInfo.lastName + "</p>");
+                        $("#idUserInfo").html("<p>До свидания: " + userInfo.firstName + " " + userInfo.lastName + "</p>");
+                        // Очищаем таблицу
+                        $("#idDataTable>tbody:last-child").empty();
                     }
                 });
             }
@@ -96,17 +101,17 @@
                  * @param {type} data
                  * @returns {undefined}
                  */
-                                
+
                 $.post(host + "/auth/realms/" + realm + "/protocol/openid-connect/token", {client_id: clientId, password: password, username: username, grant_type: "password"})
                         .done(function (data) {
                             console.log("token request");
                             console.log(data);
                             accessToken = data;
-                            
+
                             /** 
                              * Получаем данные пользователя                             
                              */
-                            
+
                             $.ajax({
                                 //"http://192.168.1.150:8080/auth/video-app/realms/" + realm + "/users"
 
@@ -127,11 +132,11 @@
                                     $("#idUserInfo").html("<p>Добро пожаловать: " + userInfo.family_name + " " + userInfo.given_name + "</p>");
                                     setCookie("userId", userInfo.sub, null);
                                     setCookie("userName", username, null);
-                                    
+
                                     /**
                                      *  Загружаемм основной контент
                                      */
-                                    
+
                                     $.ajax({
                                         url: host + "/video-rest/list",
                                         data: {username: userInfo.sub},
@@ -183,45 +188,47 @@
 
     </head>
     <body>
-        <div id="header">
-            <div id="idUserInfo">
+        <div id="idLoginMain">
+            <div id="header">
+                <div id="idUserInfo">
 
+                </div>
             </div>
-        </div>
-        <div id="idLoginForm">
-            <div id="idLogin">
-                <form action="http://192.168.1.150:8080/auth/realms/master/protocol/openid-connect/token" method="POST">                
-                    <table>
-                        <tr>
-                            <td>
-                                Имя
-                            </td>
-                            <td>
-                                <input id="nameId" type="text" name="username" value="appuser"/>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                Пароль
-                            </td>
-                            <td>
-                                <input id="passwordId" type="text" name="password" value="123"/> 
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input type="button" value="Вход" onclick="userAuth();"/>                
-                            </td>
-                            <td>
-                                <input type="button" value="Выход" onclick="userCloseAuth();"/>                
-                            </td>
-                        </tr>
-                    </table>
-                    <input id="idId" type="text" value=" ">
+            <div id="idLoginForm">
+                <div id="idLogin">
+                    <form action="http://192.168.1.150:8080/auth/realms/master/protocol/openid-connect/token" method="POST">                
+                        <table>
+                            <tr>
+                                <td>
+                                    Имя
+                                </td>
+                                <td>
+                                    <input id="nameId" type="text" name="username" value="appuser"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Пароль
+                                </td>
+                                <td>
+                                    <input id="passwordId" type="text" name="password" value="123"/> 
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input type="button" value="Вход" onclick="userAuth();"/>                
+                                </td>
+                                <td>
+                                    <input type="button" value="Выход" onclick="userCloseAuth();"/>                
+                                </td>
+                            </tr>
+                        </table>
+                        <input id="idId" type="text" value=" ">
 
-                    <input type="button" value="Информация" onclick="getUserInfo();"/> 
-                </form>
-            </div>           
+                        <input type="button" value="Информация" onclick="getUserInfo();"/> 
+                    </form>
+                </div>           
+            </div>
         </div>
         <div id="content">
             <table id="idDataTable">
