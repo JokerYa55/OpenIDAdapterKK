@@ -91,12 +91,22 @@
                 //http://192.168.1.150:8080/auth/realms/master/account/
                 //http://192.168.1.150:8080/auth/admin/realms/master/users
 
+                /**получаем токен 
+                 * 
+                 * @param {type} data
+                 * @returns {undefined}
+                 */
+                                
                 $.post(host + "/auth/realms/" + realm + "/protocol/openid-connect/token", {client_id: clientId, password: password, username: username, grant_type: "password"})
                         .done(function (data) {
                             console.log("token request");
                             console.log(data);
                             accessToken = data;
-
+                            
+                            /** 
+                             * Получаем данные пользователя                             
+                             */
+                            
                             $.ajax({
                                 //"http://192.168.1.150:8080/auth/video-app/realms/" + realm + "/users"
 
@@ -114,10 +124,14 @@
                                     console.log(userInfo);
                                     $("#idId").val(userInfo.sub);
                                     $("#nameId").val(userInfo.preferred_username);
-                                    $("#helloId").html("<p>Добро пожаловать: " + userInfo.family_name + " " + userInfo.given_name + "</p>");
+                                    $("#idUserInfo").html("<p>Добро пожаловать: " + userInfo.family_name + " " + userInfo.given_name + "</p>");
                                     setCookie("userId", userInfo.sub, null);
                                     setCookie("userName", username, null);
-                                    // Загружаемм основной контент
+                                    
+                                    /**
+                                     *  Загружаемм основной контент
+                                     */
+                                    
                                     $.ajax({
                                         url: host + "/video-rest/list",
                                         data: {username: userInfo.sub},
@@ -170,11 +184,11 @@
     </head>
     <body>
         <div id="header">
-            <div id="helloId">
+            <div id="idUserInfo">
 
             </div>
         </div>
-        <div id="menu">
+        <div id="idLoginForm">
             <div id="idLogin">
                 <form action="http://192.168.1.150:8080/auth/realms/master/protocol/openid-connect/token" method="POST">                
                     <table>
