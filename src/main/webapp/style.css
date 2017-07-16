@@ -18,3 +18,31 @@ and open the template in the editor.
     top: 0px;
     right: 0px;
 }
+
+
+#idDataTable{
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
+    font-size: 14px;
+    border-radius: 5px;
+    border-spacing: 0;
+    text-align: center;
+    width: 50%;
+}
+
+#idDataTable th {
+    font-size: 13px;
+    font-weight: normal;
+    background: #b9c9fe;
+    border-top: 4px solid #aabcfe;
+    border-bottom: 1px solid #fff;
+    color: #039;
+    padding: 8px;
+}
+#idDataTable td {
+    background: #e8edff;
+    border-bottom: 1px solid #fff;
+    color: #669;
+    border-top: 1px solid transparent;
+    padding: 8px;
+}
+#idDataTable tr:hover td {background: #ccddff;}
