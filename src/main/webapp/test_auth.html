@@ -12,12 +12,13 @@ and open the template in the editor.
         <script src="jquery-3.2.1.js"></script>
         <script src="http://192.168.1.150:8080/auth/js/keycloak.js"></script>
         <script>
+            var host = "http://192.168.1.150:8080";
             function test() {
                 var accessToken;
                 accessToken = $("#idToken").val();
                 console.log(accessToken);
                 $.ajax({
-                    url: "http://192.168.1.150:8080/video-rest/list",
+                    url:  host + "/video-rest/list",
                     //data: {username: userInfo.sub},
                     type: "GET",
                     beforeSend: function (xhr) {

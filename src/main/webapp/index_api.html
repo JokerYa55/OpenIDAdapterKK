@@ -5,7 +5,7 @@
 
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" type="text/css" href="style.css">
+        <link rel="stylesheet" type="text/css" href="/css/style.css">
         <script src="jquery-3.2.1.js"></script>
         <script src="http://192.168.1.150:8080/auth/js/keycloak.js"></script>
         <script>
@@ -13,65 +13,7 @@
             var accessToken;
             var realm = "videomanager";
             var clientId = "video-app";
-            //var keycloak = Keycloak();
-
-
-            /** возвращает cookie с именем name, если есть, если нет, то undefined
-             * 
-             * @param {type} name
-             * @returns {undefined}
-             */
-
-            /* function getCookie(name) {
-             var matches = document.cookie.match(new RegExp(
-             "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
-             ));
-             return matches ? decodeURIComponent(matches[1]) : undefined;
-             }*/
-            /*
-             * 
-             * @param {type} name название cookie
-             * @param {type} value значение cookie (строка)
-             * @param {type} options Объект с дополнительными свойствами для установки cookie:
-             * @returns {undefined} Время истечения cookie. Интерпретируется по-разному, в зависимости от типа:
-             * Число – количество секунд до истечения. Например, expires: 3600 – кука на час.
-             * Объект типа Date – дата истечения.
-             * Если expires в прошлом, то cookie будет удалено.
-             * Если expires отсутствует или 0, то cookie будет установлено как сессионное и исчезнет при закрытии браузера. 
-             
-             path
-             Путь для cookie.             
-             
-             domain
-             Домен для cookie.
-             
-             secure
-             Если true, то пересылать cookie только по защищенному соединению.
-             */
-
-            /**
-             * Получить данные пользователя
-             * @returns {undefined}
-             */
-            /*  function loadUserInfo() {
-             keycloak.loadUserInfo().success(function (userInfo) {
-             output(userInfo);
-             }).error(function () {
-             output('Failed to load user info');
-             });
-             }*/
-
-            /**
-             * Загрузить профиль
-             * @returns {undefined}
-             */
-            /*function loadProfile() {
-                keycloak.loadUserProfile().success(function (profile) {
-                    output(profile);
-                }).error(function () {
-                    output('Failed to load profile');
-                });
-            }*/
+            var host = "http://192.168.1.150:8080";
 
             function setCookie(name, value, options) {
                 options = options || {};
@@ -109,7 +51,7 @@
                 //console.log(accessToken);
                 //var realm = "Videomanager";
                 $.ajax({
-                    url: "http://192.168.1.150:8080/auth/realms/" + realm + "/protocol/openid-connect/logout",
+                    url: host + "/auth/realms/" + realm + "/protocol/openid-connect/logout",
                     type: "GET",
                     beforeSend: function (xhr) {
                         xhr.setRequestHeader('Authorization', "Bearer " + accessToken.access_token);
@@ -129,7 +71,7 @@
                 console.log("userNoAuth()");
                 console.log(accessToken);
                 $.ajax({
-                    url: "http://192.168.1.150:8080/auth/realms/" + realm + "/protocol/openid-connect/userinfo",
+                    url: host + "/auth/realms/" + realm + "/protocol/openid-connect/userinfo",
                     type: "GET",
                     beforeSend: function (xhr) {
                         xhr.setRequestHeader('Authorization', "Bearer " + accessToken.access_token);
@@ -149,7 +91,7 @@
                 //http://192.168.1.150:8080/auth/realms/master/account/
                 //http://192.168.1.150:8080/auth/admin/realms/master/users
 
-                $.post("http://192.168.1.150:8080/auth/realms/" + realm + "/protocol/openid-connect/token", {client_id: clientId, password: password, username: username, grant_type: "password"})
+                $.post(host + "/auth/realms/" + realm + "/protocol/openid-connect/token", {client_id: clientId, password: password, username: username, grant_type: "password"})
                         .done(function (data) {
                             console.log("token request");
                             console.log(data);
@@ -158,7 +100,7 @@
                             $.ajax({
                                 //"http://192.168.1.150:8080/auth/video-app/realms/" + realm + "/users"
 
-                                url: "http://192.168.1.150:8080/auth/realms/" + realm + "/protocol/openid-connect/userinfo",
+                                url: host + "/auth/realms/" + realm + "/protocol/openid-connect/userinfo",
                                 data: {username: username},
                                 type: "GET",
                                 beforeSend: function (xhr) {
@@ -177,7 +119,7 @@
                                     setCookie("userName", username, null);
                                     // Загружаемм основной контент
                                     $.ajax({
-                                        url: "http://192.168.1.150:8080/video-rest/list",
+                                        url: host + "/video-rest/list",
                                         data: {username: userInfo.sub},
                                         type: "GET",
                                         beforeSend: function (xhr) {
@@ -188,24 +130,22 @@
                                             console.log("data = ");
                                             console.log(data);
 
+                                            var tBody = $("#idDataTable>tbody:last-child");
+                                            tBody.empty();
+
                                             // Раскидываем данные по элементам
                                             for (var item in data) {
                                                 console.log(data[item]);
                                                 var temp = data[item];
                                                 console.log($("#idDataTable>tbody:last-child"));
                                                 //$("#idDataTable>tbody:last-child").append("<tr>" + temp.title + "</td><td>" + temp.url + "</td></tr>");
-                                                var tBody = $("#idDataTable>tbody:last-child");
+                                                tBody = $("#idDataTable>tbody:last-child");
                                                 var tRow = $("<tr>");
                                                 var tColumn1 = $("<td>");
                                                 var tColumn2 = $("<td>");
-                                                var tUrl = $("<a>").attr('href', temp.url).attr('id', 'xyz_'+item);
+                                                var tUrl = $("<a>").attr('href', temp.url).attr('id', 'xyz_' + item);
                                                 tUrl.append("a");
                                                 console.log(tUrl);
-                                                /*tColumn.append(temp.title);
-                                                 tRow.append(tColumn);
-                                                 tColumn.append(tUrl);
-                                                 tRow.append(tColumn);                                                
-                                                 tBody.append(tRow);*/
 
                                                 tColumn1.append(temp.title);
                                                 tColumn2.append(tUrl);
@@ -213,14 +153,10 @@
                                                 console.log(tRow);
                                                 tRow.append(tColumn2);
                                                 console.log(tRow);
-                                                
+
                                                 tBody.append(tRow);
 
                                             }
-
-                                            //console.log("data[0] = ");
-                                            //userInfo = data[0];
-                                            //console.log(userInfo);
                                             // Загружаемм основной контент
                                             $("#content").append(data);
                                         }
@@ -229,19 +165,6 @@
                             });
                         });
             }
-
-
-            /*function test() {
-
-                console.log(keycloak);
-                keycloak.init({onLoad: 'login-required'}).success(function (authenticated) {
-                    console.log(authenticated ? 'authenticated' : 'not authenticated');
-                    loadUserInfo();
-                }).error(function () {
-                    alert('failed to initialize');
-                });
-
-            }*/
         </script>    
 
     </head>
