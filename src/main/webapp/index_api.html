@@ -20,7 +20,7 @@
 
                 var expires = options.expires;
 
-                if (typeof expires == "number" && expires) {
+                if (typeof expires === "number" && expires) {
                     var d = new Date();
                     d.setTime(d.getTime() + expires * 1000);
                     expires = options.expires = d;
@@ -43,7 +43,7 @@
 
                 document.cookie = updatedCookie;
             }
-            
+
             /** 
              * Logout
              */
@@ -152,6 +152,15 @@
                                             var tBody = $("#idDataTable>tbody:last-child");
                                             tBody.empty();
 
+                                            var tTh1 = $("<th>");
+                                            var tTh2 = $("<th>");
+                                            var tHRow = $("<tr>");
+                                            
+                                            tTh1.append("Название");
+                                            tTh2.append("URL");
+                                            tHRow.append(tTh1);
+                                            tHRow.append(tTh2);
+                                            tBody.append(tHRow);
                                             // Раскидываем данные по элементам
                                             for (var item in data) {
                                                 console.log(data[item]);
@@ -159,6 +168,7 @@
                                                 console.log($("#idDataTable>tbody:last-child"));
                                                 //$("#idDataTable>tbody:last-child").append("<tr>" + temp.title + "</td><td>" + temp.url + "</td></tr>");
                                                 tBody = $("#idDataTable>tbody:last-child");
+
                                                 var tRow = $("<tr>");
                                                 var tColumn1 = $("<td>");
                                                 var tColumn2 = $("<td>");
@@ -172,9 +182,7 @@
                                                 console.log(tRow);
                                                 tRow.append(tColumn2);
                                                 console.log(tRow);
-
                                                 tBody.append(tRow);
-
                                             }
                                             // Загружаемм основной контент
                                             $("#content").append(data);
