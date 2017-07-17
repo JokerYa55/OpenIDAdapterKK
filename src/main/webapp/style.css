@@ -38,6 +38,7 @@ and open the template in the editor.
     color: #039;
     padding: 8px;
 }
+
 #idDataTable td {
     background: #e8edff;
     border-bottom: 1px solid #fff;
@@ -45,4 +46,10 @@ and open the template in the editor.
     border-top: 1px solid transparent;
     padding: 8px;
 }
+
 #idDataTable tr:hover td {background: #ccddff;}
+
+#idTokenInfo{
+    float: left;
+    width: 200px;    
+}

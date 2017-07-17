@@ -13,12 +13,25 @@ and open the template in the editor.
         <script src="http://192.168.1.150:8080/auth/js/keycloak.js"></script>
         <script>
             var host = "http://192.168.1.150:8080";
+
+            function setLocalStorageParam(name, value) {
+                localStorage.setItem(name, value);
+            }
+
+            function getLocalStorageParam(name) {
+                return localStorage.getItem(name);
+            }
+
             function test() {
+                
+                console.log(getLocalStorageParam("access_token"));
+                
                 var accessToken;
-                accessToken = $("#idToken").val();
+                //accessToken = $("#idToken").val();
+                accessToken = getLocalStorageParam("access_token");
                 console.log(accessToken);
                 $.ajax({
-                    url:  host + "/video-rest/list",
+                    url: host + "/video-rest/list",
                     //data: {username: userInfo.sub},
                     type: "GET",
                     beforeSend: function (xhr) {
@@ -36,7 +49,7 @@ and open the template in the editor.
                             var temp = data[item];
                             console.log($("#idDataTable>tbody:last-child"));
                             //$("#idDataTable>tbody:last-child").append("<tr>" + temp.title + "</td><td>" + temp.url + "</td></tr>");
-                            tBody = $("#idDataTable>tbody:last-child");                            
+                            tBody = $("#idDataTable>tbody:last-child");
                             var tRow = $("<tr>");
                             var tColumn1 = $("<td>");
                             var tColumn2 = $("<td>");
