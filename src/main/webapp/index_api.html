@@ -7,7 +7,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" type="text/css" href="style.css">
         <script src="jquery-3.2.1.js"></script>
-        <script src="http://192.168.1.150:8080/auth/js/keycloak.js"></script>
+
         <script>
             var userInfo;
             var accessToken;
@@ -68,7 +68,8 @@
                 $.ajax({
                     url: host + "/auth/realms/" + realm + "/protocol/openid-connect/logout",
                     type: "POST",
-                    data : {refresh_token : accessToken.refresh_token},
+                    data: {refresh_token: accessToken.refresh_token,
+                        client_id: clientId},
                     headers: {'Authorization': "Bearer " + accessToken.access_token,
                         'Content-Type': "application/x-www-form-urlencoded"},
                     /*beforeSend: function (xhr) {
@@ -123,6 +124,7 @@
                         {client_id: clientId,
                             password: password,
                             username: username,
+                            client_secret: "50c93bab-fe8f-422a-948e-a63c52458ee3",
                             grant_type: "password"}).done(function (data) {
 
                     console.log("token request");
@@ -221,6 +223,35 @@
             function getTokenInfo() {
                 $("#idTokenInfo").html(getLocalStorageParam("access_token"));
             }
+
+            function refreshToken() {
+
+            }
+
+            function getOpenIDInfo() {
+                // /realms/{realm-name}/.well-known/openid-configuration
+                $.ajax({url: host + "/auth/realms/" + realm + "/.well-known/openid-configuration",
+                    type: "GET",
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader('Authorization', "Bearer " + accessToken.access_token);
+                    },
+                    success: function (data) {
+                        console.log(data);
+                    }
+                });
+            }
+
+            function getAuth() {
+                // /realms/{realm-name}/protocol/openid-connect/auth
+                $.ajax({url: host + "/auth/realms/" + realm + "/protocol/openid-connect/auth",
+                    type: "GET",
+                    data: {client_id: clientId},
+                    success: function (data) {
+                        console.log(data);
+                    }
+                });
+
+            }
         </script>    
 
     </head>
@@ -263,6 +294,7 @@
                         <input id="idId" type="text" value=" ">
 
                         <input type="button" value="Информация" onclick="getUserInfo();"/> 
+                        <input type="button" value="Auth" onclick="getAuth();"/> 
                     </form>
                 </div>           
             </div>
@@ -282,7 +314,7 @@
 
             </div>
         </div>
-
+        <button onclick="getOpenIDInfo();">Инфо</button>
     </body>
 </body>
 </html>
