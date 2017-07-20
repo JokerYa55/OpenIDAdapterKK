@@ -1,0 +1,262 @@
+/* 
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+/* global kc */
+
+var kc = this;
+kc.host = "http://192.168.1.150:8080";
+kc.realm = "videomanager";
+kc.clientId = "video-app";
+kc.clientSecret = "50c93bab-fe8f-422a-948e-a63c52458ee3";
+kc.sqlStorage = null; // Локальное sqlStorage хранилище
+kc.tableName = "rtkPasportParams"; // Имя таблицы 
+kc.columnName = "f_name";
+kc.columnVal = "f_val";
+
+kc.sqlStorage = initSqlStorage();
+initSqlShema(kc.sqlStorage);
+
+// Функции для работы с Web SQL Storage
+function initSqlStorage() {
+    if (kc.sqlStorage === null) {
+        try {
+            var db = openDatabase("RtkPasport", "0.1", "A list of to do items.", 200000);
+            if (!db) {
+                console.log("Failed to connect to database.");
+            } else {
+                kc.sqlStorage = db;
+                return kc.sqlStorage;
+            }
+        } catch (exception) {
+            return null;
+        }
+        
+    } else
+    {
+        return kc.sqlStorage;
+    }
+}
+
+function initSqlShema(db) {
+    db.transaction(function (tx) {
+        tx.executeSql("SELECT COUNT(*) FROM rtkPasport", [], function (result) {
+            console.log('TABLE ' + kc.tableName + " yes!");
+        }, function (tx, error) {
+            tx.executeSql("CREATE TABLE " + kc.tableName + " (id REAL UNIQUE, " + kc.columnName + " TEXT, " + kc.columnVal + " TEXT, timestamp REAL)", [], null, null, null);
+        });
+    });
+}
+
+function setSqlParam(db, pName, pVal) {
+    console.log("setSqlParam");
+    db.transaction(function (tx) {
+        tx.executeSql("INSERT INTO " + kc.tableName + " (" + kc.columnName + ", " + kc.columnVal + ", timestamp) values(?, ?, ?)", [pName, pVal, new Date().getTime()], null, null);
+    });
+}
+
+/**
+ * 
+ * @param {type} name
+ * @param {type} value
+ * @param {type} options
+ * @returns {undefined}
+ */
+
+function setCookie(name, value, options) {
+    options = options || {};
+    
+    var expires = options.expires;
+    
+    if (typeof expires === "number" && expires) {
+        var d = new Date();
+        d.setTime(d.getTime() + expires * 1000);
+        expires = options.expires = d;
+    }
+    if (expires && expires.toUTCString) {
+        options.expires = expires.toUTCString();
+    }
+    
+    value = encodeURIComponent(value);
+    
+    var updatedCookie = name + "=" + value;
+    
+    for (var propName in options) {
+        updatedCookie += "; " + propName;
+        var propValue = options[propName];
+        if (propValue !== true) {
+            updatedCookie += "=" + propValue;
+        }
+    }
+    
+    document.cookie = updatedCookie;
+}
+
+/**
+ * 
+ * @param {type} name
+ * @param {type} value
+ * @returns {undefined}
+ */
+
+function setLocalStorageParam(name, value) {
+    localStorage.setItem(name, value);
+}
+
+/**
+ * 
+ * @param {type} name
+ * @returns {undefined}
+ */
+
+function getLocalStorageParam(name) {
+    return localStorage.getItem(name);
+}
+
+/**
+ * 
+ * @param {type} username
+ * @param {type} password
+ * @returns {undefined}
+ */
+
+function userLogin(username, password) {
+    console.log("userLogin");
+    var authPromise = userAuth(username, password, kc.host, kc.realm, kc.clientId, kc.clientSecret);
+    console.log(authPromise);
+    console.log(kc);
+    authPromise.then(function (val) {
+        console.log("val = ");
+        console.log(val);
+        
+        //accessToken = val;
+        setLocalStorageParam("access_token", val.access_token);
+        setLocalStorageParam("id_token", val.id_token);
+        setLocalStorageParam("refresh_token", val.refresh_token);
+        setLocalStorageParam("session_state", val.session_state);
+        
+        setSqlParam(kc.sqlStorage, "access_token", val.access_token);
+        
+        kc.rtkPasport = val;
+        
+        var userInfoPromise = getUserInfo(username, kc.host, kc.realm, kc.rtkPasport);
+        userInfoPromise.then(function (val) {
+            console.log(val);
+            setSqlParam(kc.sqlStorage, "access_token", val.access_token);
+            resolve(val);
+        });
+        
+    });
+}
+
+/**
+ * 
+ * @param {type} username - Имя пользователя
+ * @param {type} password - Пароль
+ * @param {type} host     - адрес сервера SSO
+ * @param {type} realm    - имя realm  
+ * @param {type} clientId - clientID из настроек клиента в SSO 
+ * @param {type} clientSecret - clientSecret из настроек клиента в SSO
+ * @returns {userAuth.p1.scriptuserAuth#p1|userAuth.p1} возвращает обещание
+ */
+
+function userAuth(username, password, host, realm, clientId, clientSecret) {
+    console.log("userAuth");
+    var p1 = new Promise(function (resolve, reject) {
+        $.post(host + "/auth/realms/" + realm + "/protocol/openid-connect/token",
+                {client_id: clientId,
+                    password: password,
+                    username: username,
+                    client_secret: clientSecret,
+                    grant_type: "password"}).done(function (data) {
+            console.log(data);
+            //kc.token = data;
+            resolve(data);
+        });
+    });
+    return p1;
+    /*p1.then(function (val) {
+     console.log("val = ");
+     console.log(val);
+     });*/
+}
+
+/**
+ * 
+ * @returns {undefined}
+ */
+function getData() {
+    
+}
+
+/**
+ * 
+ * @param {type} host
+ * @param {type} realm
+ * @param {type} accessToken
+ * @returns {undefined}
+ */
+function getOpenIDInfo(host, realm, accessToken) {
+    // /realms/{realm-name}/.well-known/openid-configuration
+    $.ajax({url: host + "/auth/realms/" + realm + "/.well-known/openid-configuration",
+        type: "GET",
+        beforeSend: function (xhr) {
+            xhr.setRequestHeader('Authorization', "Bearer " + accessToken.access_token);
+        },
+        success: function (data) {
+            console.log(data);
+        }
+    });
+}
+
+/**
+ * 
+ * @param {type} username
+ * @param {type} host
+ * @param {type} realm
+ * @param {type} accessToken
+ * @returns {getUserInfo.p2.index_apigetUserInfo#p2|getUserInfo.p2.scriptgetUserInfo#p2|getUserInfo.p2}
+ */
+
+function getUserInfo(username, host, realm, accessToken) {
+    ///realms/{realm-name}/protocol/openid-connect/userinfo
+    console.log("getUserInfo");
+    console.log(accessToken);
+    var p2 = new Promise(function (resolve, reject) {
+        $.ajax({
+            //"http://192.168.1.150:8080/auth/video-app/realms/" + realm + "/users"
+            url: host + "/auth/realms/" + realm + "/protocol/openid-connect/userinfo",
+            data: {username: username},
+            type: "GET",
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader('Authorization', "Bearer " + accessToken.access_token);
+            },
+            success: function (data) {
+                console.log(data);
+            }
+            
+            /*$.ajax({
+             url: host + "/auth/realms/" + realm + "/protocol/openid-connect/userinfo",
+             type: "GET",
+             beforeSend: function (xhr) {
+             xhr.setRequestHeader('Authorization', "Bearer " + accessToken.access_token);
+             },
+             success: function (data) {
+             console.log("Session close");
+             console.log(data);
+             }
+             });*/
+        });
+    });
+    return p2;
+}
+
+function refreshToken() {
+    
+}
+
+function getTokenInfo() {
+    $("#idTokenInfo").html(getLocalStorageParam("access_token"));
+}

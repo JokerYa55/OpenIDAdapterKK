@@ -6,55 +6,18 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" type="text/css" href="style.css">
+        <script  src="script.js"></script>
         <script src="jquery-3.2.1.js"></script>
 
         <script>
             var userInfo;
             var accessToken;
-            var realm = "videomanager";
-            var clientId = "video-app";
-            var host = "http://192.168.1.150:8080";
-            var kc = this;
-
-            /**
-             * Добавить параметр в докальное хранилище             
-             */
-
-            function setLocalStorageParam(name, value) {
-                localStorage.setItem(name, value);
-            }
-
-            function getLocalStorageParam(name) {
-                return localStorage.getItem(name);
-            }
-
-            function setCookie(name, value, options) {
-                options = options || {};
-
-                var expires = options.expires;
-
-                if (typeof expires === "number" && expires) {
-                    var d = new Date();
-                    d.setTime(d.getTime() + expires * 1000);
-                    expires = options.expires = d;
-                }
-                if (expires && expires.toUTCString) {
-                    options.expires = expires.toUTCString();
-                }
-
-                value = encodeURIComponent(value);
-
-                var updatedCookie = name + "=" + value;
-
-                for (var propName in options) {
-                    updatedCookie += "; " + propName;
-                    var propValue = options[propName];
-                    if (propValue !== true) {
-                        updatedCookie += "=" + propValue;
-                    }
-                }
-
-                document.cookie = updatedCookie;
+            console.log(kc);
+            function userLoginLocal() {
+                console.log("userLogin()");
+                var username = $("#nameId").val();
+                var password = $("#passwordId").val();
+                userLogin(username, password);
             }
 
             /** 
@@ -90,40 +53,9 @@
                 });
             }
 
-            function getUserInfo(username) {
-                ///realms/{realm-name}/protocol/openid-connect/userinfo
-                console.log("getUserInfo");
-                console.log(accessToken);
-                var p2 = new Promise(function (resolve, reject) {
-                    $.ajax({
-                        //"http://192.168.1.150:8080/auth/video-app/realms/" + realm + "/users"
-                        url: host + "/auth/realms/" + realm + "/protocol/openid-connect/userinfo",
-                        data: {username: username},
-                        type: "GET",
-                        beforeSend: function (xhr) {
-                            xhr.setRequestHeader('Authorization', "Bearer " + accessToken.access_token);
-                        },
-                        success: function (data) {
-                            console.log(data);
-                        }
 
-                        /*$.ajax({
-                         url: host + "/auth/realms/" + realm + "/protocol/openid-connect/userinfo",
-                         type: "GET",
-                         beforeSend: function (xhr) {
-                         xhr.setRequestHeader('Authorization', "Bearer " + accessToken.access_token);
-                         },
-                         success: function (data) {
-                         console.log("Session close");
-                         console.log(data);
-                         }
-                         });*/
-                    });
-                });
-                return p2;
-            }
 
-            function userAuth()
+            function userAuth77()
             {
                 //var accessToken;
                 var username = $("#nameId").val();
@@ -236,80 +168,7 @@
                     });
                 });
             }
-
-            function getTokenInfo() {
-                $("#idTokenInfo").html(getLocalStorageParam("access_token"));
-            }
-
-            function refreshToken() {
-
-            }
-
-            function getOpenIDInfo() {
-                // /realms/{realm-name}/.well-known/openid-configuration
-                $.ajax({url: host + "/auth/realms/" + realm + "/.well-known/openid-configuration",
-                    type: "GET",
-                    beforeSend: function (xhr) {
-                        xhr.setRequestHeader('Authorization', "Bearer " + accessToken.access_token);
-                    },
-                    success: function (data) {
-                        console.log(data);
-                    }
-                });
-            }
-
-            function getAuth(username, password) {
-                // /realms/{realm-name}/protocol/openid-connect/auth
-                var p1 = new Promise(function (resolve, reject) {
-                    $.post(host + "/auth/realms/" + realm + "/protocol/openid-connect/token",
-                            {client_id: clientId,
-                                password: password,
-                                username: username,
-                                client_secret: "50c93bab-fe8f-422a-948e-a63c52458ee3",
-                                grant_type: "password"}).done(function (data) {
-                        console.log(data);
-                        kc.token = data;
-                        resolve(data);
-                    });
-                });
-
-                p1.then(function (val) {
-                    console.log("val = ");
-                    console.log(val);
-                });
-
-                return p1;
-            }
-
-            function getAuth1() {
-
-                var authPromise = getAuth("appuser", "123");
-                authPromise.then(function (val) {
-                    console.log("val = ");
-                    console.log(val);
-
-                    accessToken = val;
-                    setLocalStorageParam("access_token", val.access_token);
-                    setLocalStorageParam("id_token", val.id_token);
-                    setLocalStorageParam("refresh_token", val.refresh_token);
-                    setLocalStorageParam("session_state", val.session_state);
-
-                    var userInfoPromise = getUserInfo("appuser");
-                    userInfoPromise.then(function (val) {
-                        console.log("val_1 = ");
-                        console.log(val);
-                    });
-
-                });
-                /* $.ajax({url: host + "/auth-server/" + realm + "/tokens/grants/access",
-                 //"/auth/realms/" + realm + "/protocol/openid-connect/auth",
-                 type: "POST",
-                 data: {client_id: clientId},
-                 success: function (data) {
-                 console.log(data);
-                 }
-                 });*/
-            }
+            //action="http://192.168.1.150:8080/auth/realms/master/protocol/openid-connect/token" method="POST"
         </script>    
 
     </head>
@@ -322,7 +181,7 @@
             </div>
             <div id="idLoginForm">
                 <div id="idLogin">
-                    <form action="http://192.168.1.150:8080/auth/realms/master/protocol/openid-connect/token" method="POST">                
+                    <form>                
                         <table>
                             <tr>
                                 <td>
@@ -352,7 +211,7 @@
                         <input id="idId" type="text" value=" ">
 
                         <input type="button" value="Информация" onclick="getUserInfo();"/> 
-                        <input type="button" value="Auth" onclick="getAuth1();"/> 
+                        <input type="button" value="Auth" onclick="userLoginLocal();"/> 
                     </form>
                 </div>           
             </div>
