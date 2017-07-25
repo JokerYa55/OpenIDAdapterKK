@@ -33,7 +33,7 @@ function initSqlStorage() {
         } catch (exception) {
             return null;
         }
-        
+
     } else
     {
         return kc.sqlStorage;
@@ -67,9 +67,9 @@ function setSqlParam(db, pName, pVal) {
 
 function setCookie(name, value, options) {
     options = options || {};
-    
+
     var expires = options.expires;
-    
+
     if (typeof expires === "number" && expires) {
         var d = new Date();
         d.setTime(d.getTime() + expires * 1000);
@@ -78,11 +78,11 @@ function setCookie(name, value, options) {
     if (expires && expires.toUTCString) {
         options.expires = expires.toUTCString();
     }
-    
+
     value = encodeURIComponent(value);
-    
+
     var updatedCookie = name + "=" + value;
-    
+
     for (var propName in options) {
         updatedCookie += "; " + propName;
         var propValue = options[propName];
@@ -90,7 +90,7 @@ function setCookie(name, value, options) {
             updatedCookie += "=" + propValue;
         }
     }
-    
+
     document.cookie = updatedCookie;
 }
 
@@ -130,24 +130,30 @@ function userLogin(username, password) {
     authPromise.then(function (val) {
         console.log("val = ");
         console.log(val);
-        
+
         //accessToken = val;
-        setLocalStorageParam("access_token", val.access_token);
-        setLocalStorageParam("id_token", val.id_token);
-        setLocalStorageParam("refresh_token", val.refresh_token);
-        setLocalStorageParam("session_state", val.session_state);
-        
-        setSqlParam(kc.sqlStorage, "access_token", val.access_token);
-        
+        //setLocalStorageParam("access_token", val.access_token);
+        //setLocalStorageParam("id_token", val.id_token);
+        //setLocalStorageParam("refresh_token", val.refresh_token);
+        //setLocalStorageParam("session_state", val.session_state);        
+        //setSqlParam(kc.sqlStorage, "access_token", val.access_token);
+
         kc.rtkPasport = val;
-        
+
+        console.log(kc.rtkPasport);
         var userInfoPromise = getUserInfo(username, kc.host, kc.realm, kc.rtkPasport);
         userInfoPromise.then(function (val) {
             console.log(val);
-            setSqlParam(kc.sqlStorage, "access_token", val.access_token);
-            resolve(val);
+            //setSqlParam(kc.sqlStorage, "access_token", val.access_token);
+            //получили информацию о пользователе по OpenID Connect и отображаем на странице
+
+            // Получаем доп информацию о пользователе. Делаем запрос к rest
+            var userFullPromise = getUserFullInfo("", "", val.sub, kc.rtkPasport.access_token);
+            userFullPromise.then(function (data) {
+                console.log(data);
+            });
         });
-        
+
     });
 }
 
@@ -188,7 +194,7 @@ function userAuth(username, password, host, realm, clientId, clientSecret) {
  * @returns {undefined}
  */
 function getData() {
-    
+
 }
 
 /**
@@ -235,26 +241,43 @@ function getUserInfo(username, host, realm, accessToken) {
             },
             success: function (data) {
                 console.log(data);
+                resolve(data);
             }
-            
-            /*$.ajax({
-             url: host + "/auth/realms/" + realm + "/protocol/openid-connect/userinfo",
-             type: "GET",
-             beforeSend: function (xhr) {
-             xhr.setRequestHeader('Authorization', "Bearer " + accessToken.access_token);
-             },
-             success: function (data) {
-             console.log("Session close");
-             console.log(data);
-             }
-             });*/
         });
     });
     return p2;
 }
 
+/**
+ * 
+ * @param {type} host
+ * @param {type} realm
+ * @param {type} userID
+ * @param {type} accessToken
+ * @returns {getUserFullInfo.p3.scriptgetUserFullInfo#p3|getUserFullInfo.p3}
+ */
+
+function getUserFullInfo(host, realm, userID, accessToken) {
+    console.log("getUserFullInfo");
+    var p3 = new Promise(function (resolve, reject) {
+        $.ajax({
+            //"http://192.168.1.150:8080/auth/video-app/realms/" + realm + "/users"
+            url: "http://192.168.1.150:8080/testRest/admusers/hello/" + userID,
+            type: "GET",
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader('Authorization', "Bearer " + accessToken);
+            },
+            success: function (data) {
+                console.log(data);
+                resolve(data);
+            }
+        });
+    });
+    return p3;
+}
+
 function refreshToken() {
-    
+
 }
 
 function getTokenInfo() {
