@@ -10,8 +10,8 @@
         <script src="jquery-3.2.1.js"></script>
 
         <script>
-            var userInfo;
-            var accessToken;
+            //var userInfo;
+            //var accessToken;
             console.log(kc);
             function userLoginLocal() {
                 console.log("userLogin()");
@@ -210,7 +210,7 @@
                         </table>
                         <input id="idId" type="text" value=" ">
 
-                        <input type="button" value="Информация" onclick="getUserInfo();"/> 
+                        <input type="button" value="Информация" onclick="getUserInfo('appuser', kc.host, kc.realm, kc.rtkPasport);"/> 
                         <input type="button" value="Auth" onclick="userLoginLocal();"/> 
                     </form>
                 </div>           

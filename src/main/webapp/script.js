@@ -139,7 +139,7 @@ function userLogin(username, password) {
         //setSqlParam(kc.sqlStorage, "access_token", val.access_token);
 
         kc.rtkPasport = val;
-
+        console.log("kc.rtkPasport=");
         console.log(kc.rtkPasport);
         var userInfoPromise = getUserInfo(username, kc.host, kc.realm, kc.rtkPasport);
         userInfoPromise.then(function (val) {
@@ -148,6 +148,7 @@ function userLogin(username, password) {
             //получили информацию о пользователе по OpenID Connect и отображаем на странице
 
             // Получаем доп информацию о пользователе. Делаем запрос к rest
+            console.log(kc.rtkPasport.access_token);
             var userFullPromise = getUserFullInfo("", "", val.sub, kc.rtkPasport.access_token);
             userFullPromise.then(function (data) {
                 console.log(data);
@@ -229,7 +230,8 @@ function getOpenIDInfo(host, realm, accessToken) {
 function getUserInfo(username, host, realm, accessToken) {
     ///realms/{realm-name}/protocol/openid-connect/userinfo
     console.log("getUserInfo");
-    console.log(accessToken);
+    console.log("accessToken = ");
+    console.log(accessToken.access_token);
     var p2 = new Promise(function (resolve, reject) {
         $.ajax({
             //"http://192.168.1.150:8080/auth/video-app/realms/" + realm + "/users"
