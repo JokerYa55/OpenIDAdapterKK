@@ -40,6 +40,27 @@ function initSqlStorage() {
     }
 }
 
+/**
+ * 
+ * @param {type} name
+ * @param {type} value
+ * @returns {undefined}
+ */
+
+function setLocalStorageParam(name, value) {
+    localStorage.setItem(name, value);
+}
+
+/**
+ * 
+ * @param {type} name
+ * @returns {undefined}
+ */
+
+function getLocalStorageParam(name) {
+    return localStorage.getItem(name);
+}
+
 function initSqlShema(db) {
     db.transaction(function (tx) {
         tx.executeSql("SELECT COUNT(*) FROM rtkPasport", [], function (result) {
@@ -51,9 +72,36 @@ function initSqlShema(db) {
 }
 
 function setSqlParam(db, pName, pVal) {
-    console.log("setSqlParam");
+    console.log("setSqlParam => " + db + ", " + pName + ", " + pVal);
     db.transaction(function (tx) {
         tx.executeSql("INSERT INTO " + kc.tableName + " (" + kc.columnName + ", " + kc.columnVal + ", timestamp) values(?, ?, ?)", [pName, pVal, new Date().getTime()], null, null);
+    });
+}
+
+/**
+ * 
+ * @param {type} name
+ * @returns {undefined}
+ */
+
+function getCookie(name) {
+    console.log("getCookie => " + name);
+    var matches = document.cookie.match(new RegExp(
+            "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
+            ));
+    return matches ? decodeURIComponent(matches[1]) : undefined;
+}
+
+/**
+ * 
+ * @param {type} name
+ * @returns {undefined}
+ */
+
+function deleteCookie(name) {
+    console.log("deleteCookie => " + name);
+    setCookie(name, "", {
+        expires: -1
     });
 }
 
@@ -66,6 +114,7 @@ function setSqlParam(db, pName, pVal) {
  */
 
 function setCookie(name, value, options) {
+    console.log("setCookie => " + name + ", " + value + ", " + options);
     options = options || {};
 
     var expires = options.expires;
@@ -94,26 +143,7 @@ function setCookie(name, value, options) {
     document.cookie = updatedCookie;
 }
 
-/**
- * 
- * @param {type} name
- * @param {type} value
- * @returns {undefined}
- */
 
-function setLocalStorageParam(name, value) {
-    localStorage.setItem(name, value);
-}
-
-/**
- * 
- * @param {type} name
- * @returns {undefined}
- */
-
-function getLocalStorageParam(name) {
-    return localStorage.getItem(name);
-}
 
 /**
  * 
@@ -131,17 +161,13 @@ function userLogin(username, password) {
         console.log("val = ");
         console.log(val);
 
-        //accessToken = val;
-        //setLocalStorageParam("access_token", val.access_token);
-        //setLocalStorageParam("id_token", val.id_token);
-        //setLocalStorageParam("refresh_token", val.refresh_token);
-        //setLocalStorageParam("session_state", val.session_state);        
-        //setSqlParam(kc.sqlStorage, "access_token", val.access_token);
-
         kc.rtkPasport = val;
         console.log("kc.rtkPasport=");
         console.log(kc.rtkPasport);
-        var userInfoPromise = getUserInfo(username, kc.host, kc.realm, kc.rtkPasport);
+        // Устанавливаем куки
+        setCookie("access_token", kc.rtkPasport.access_token, {});
+        setCookie("username", username, {});
+        var userInfoPromise = getUserInfo(username, kc.host, kc.realm, kc.access_token);
         userInfoPromise.then(function (val) {
             console.log(val);
             //setSqlParam(kc.sqlStorage, "access_token", val.access_token);
@@ -149,7 +175,8 @@ function userLogin(username, password) {
 
             // Получаем доп информацию о пользователе. Делаем запрос к rest
             console.log(kc.rtkPasport.access_token);
-            var userFullPromise = getUserFullInfo("", "", val.sub, kc.rtkPasport.access_token);
+
+            var userFullPromise = getUserFullInfo("", "", val.sub, kc.access_token);
             userFullPromise.then(function (data) {
                 console.log(data);
             });
@@ -231,7 +258,7 @@ function getUserInfo(username, host, realm, accessToken) {
     ///realms/{realm-name}/protocol/openid-connect/userinfo
     console.log("getUserInfo");
     console.log("accessToken = ");
-    console.log(accessToken.access_token);
+    console.log(kc);
     var p2 = new Promise(function (resolve, reject) {
         $.ajax({
             //"http://192.168.1.150:8080/auth/video-app/realms/" + realm + "/users"
@@ -239,7 +266,7 @@ function getUserInfo(username, host, realm, accessToken) {
             data: {username: username},
             type: "GET",
             beforeSend: function (xhr) {
-                xhr.setRequestHeader('Authorization', "Bearer " + accessToken.access_token);
+                xhr.setRequestHeader('Authorization', "Bearer " + kc.access_token);
             },
             success: function (data) {
                 console.log(data);
