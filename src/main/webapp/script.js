@@ -161,11 +161,23 @@ function userLogin(username, password) {
         console.log("val = ");
         console.log(val);
 
-        kc.rtkPasport = val;
-        console.log("kc.rtkPasport=");
-        console.log(kc.rtkPasport);
+        kc.access_token = val.access_token;
+        kc.id_token = val.id_token;
+        kc.refresh_token = val.refresh_token;
+        kc.session_state = val.session_state;
+        kc.expires_in = val.expires_in;
+        kc.refresh_expires_in = val.refresh_expires_in;
+        
+        console.log("kc = ");
+        console.log(kc);
         // Устанавливаем куки
-        setCookie("access_token", kc.rtkPasport.access_token, {});
+        setCookie("access_token", kc.access_token, {});
+        setCookie("id_token", kc.id_token, {});
+        setCookie("refresh_token", kc.refresh_token, {});
+        setCookie("session_state", kc.session_state, {});
+        setCookie("refresh_expires_in", kc.refresh_expires_in, {});
+        setCookie("expires_in", kc.expires_in, {});
+        
         setCookie("username", username, {});
         var userInfoPromise = getUserInfo(username, kc.host, kc.realm, kc.access_token);
         userInfoPromise.then(function (val) {
@@ -174,7 +186,7 @@ function userLogin(username, password) {
             //получили информацию о пользователе по OpenID Connect и отображаем на странице
 
             // Получаем доп информацию о пользователе. Делаем запрос к rest
-            console.log(kc.rtkPasport.access_token);
+            console.log(kc.access_token);
 
             var userFullPromise = getUserFullInfo("", "", val.sub, kc.access_token);
             userFullPromise.then(function (data) {
@@ -256,9 +268,9 @@ function getOpenIDInfo(host, realm, accessToken) {
 
 function getUserInfo(username, host, realm, accessToken) {
     ///realms/{realm-name}/protocol/openid-connect/userinfo
-    console.log("getUserInfo");
+    console.log("getUserInfo => " + username + ", " + host + ", " + realm + ", " + accessToken);
     console.log("accessToken = ");
-    console.log(kc);
+    console.log(accessToken);
     var p2 = new Promise(function (resolve, reject) {
         $.ajax({
             //"http://192.168.1.150:8080/auth/video-app/realms/" + realm + "/users"
@@ -266,7 +278,7 @@ function getUserInfo(username, host, realm, accessToken) {
             data: {username: username},
             type: "GET",
             beforeSend: function (xhr) {
-                xhr.setRequestHeader('Authorization', "Bearer " + kc.access_token);
+                xhr.setRequestHeader('Authorization', "Bearer " + accessToken);
             },
             success: function (data) {
                 console.log(data);
