@@ -14,7 +14,7 @@
             //var accessToken;
 
             $(document).ready(function () {
-
+                console.log("document.redy");
                 var kc = {};
                 kc.host = "http://192.168.1.150:8080";
                 kc.realm = "videomanager";
@@ -27,9 +27,9 @@
                 kc.access_token = "";
                 //kc.sqlStorage = initSqlStorage();
                 //initSqlShema(kc.sqlStorage);
-                
+
                 kc.access_token = getCookie("access_token");
-                
+
                 if (kc.access_token === undefined) {
                     console.log("Куки не установлены");
                     // Выводим сообщение что нужно авторизоваться
@@ -41,18 +41,20 @@
                     console.log(kc);
                     // Получаем инфо user-a                    
                     var userInfoPromise = getUserInfo(username, kc.host, kc.realm, kc.access_token);
-                    userInfoPromise.then(function(data){
+                    userInfoPromise.then(function (data) {
                         console.log(data);
                     });
                 }
+                console.groupEnd();
             });
 
 
             function userLoginLocal() {
-                console.log("userLogin()");
+                console.group("userLogin()");
                 var username = $("#nameId").val();
                 var password = $("#passwordId").val();
                 userLogin(username, password);
+                console.groupEnd();
             }
 
             /** 
@@ -61,152 +63,42 @@
             function userCloseAuth()
             {
                 ///realms/master/protocol/openid-connect/logout
-                console.log("userNoAuth()");
-                //console.log(accessToken);
-                //var realm = "Videomanager";
-                $.ajax({
-                    url: host + "/auth/realms/" + realm + "/protocol/openid-connect/logout",
-                    type: "POST",
-                    data: {refresh_token: accessToken.refresh_token,
-                        client_id: clientId},
-                    headers: {'Authorization': "Bearer " + accessToken.access_token,
-                        'Content-Type': "application/x-www-form-urlencoded"},
-                    /*beforeSend: function (xhr) {
-                     xhr.setRequestHeader('Authorization', "Bearer " + accessToken.access_token);
-                     xhr.setRequestHeader('Content-Type', "application/x-www-form-urlencoded");
-                     xhr.setRequestHeader('Payload', "refresh_token=" + accessToken.refresh_token);
-                     },*/
-                    success: function (data) {
-                        console.log("Session close");
-                        console.log(data);
-                        accessToken = new Object();
-                        console.log(accessToken);
-                        deleteCookie("access_token");
-                        $("#idUserInfo").html("<p>До свидания: " + userInfo.firstName + " " + userInfo.lastName + "</p>");
-                        // Очищаем таблицу
-                        $("#idDataTable>tbody:last-child").empty();
-                    }
-                });
-            }
-
-
-
-            function userAuth77()
-            {
-                //var accessToken;
-                var username = $("#nameId").val();
-                var password = $("#passwordId").val();
-                //http://192.168.1.150:8080/auth/realms/master/account/
-                //http://192.168.1.150:8080/auth/admin/realms/master/users
-
-                /**получаем токен 
-                 * 
-                 * @param {type} data
-                 * @returns {undefined}
-                 */
-
-                $.post(host + "/auth/realms/" + realm + "/protocol/openid-connect/token",
-                        {client_id: clientId,
-                            password: password,
-                            username: username,
-                            client_secret: "50c93bab-fe8f-422a-948e-a63c52458ee3",
-                            grant_type: "password"}).done(function (data) {
-
-                    console.log("token request");
-                    console.log(data);
-                    accessToken = data;
-                    //setLocalStorageParam("access_token", data.access_token);
-                    //setLocalStorageParam("id_token", data.id_token);
-                    //setLocalStorageParam("refresh_token", data.refresh_token);
-                    //setLocalStorageParam("session_state", data.session_state);
-
-                    /** 
-                     * Получаем данные пользователя                             
-                     */
-
+                console.group("userNoAuth()");
+                try {
                     $.ajax({
-                        //"http://192.168.1.150:8080/auth/video-app/realms/" + realm + "/users"
-
-                        url: host + "/auth/realms/" + realm + "/protocol/openid-connect/userinfo",
-                        data: {username: username},
-                        type: "GET",
-                        beforeSend: function (xhr) {
-                            xhr.setRequestHeader('Authorization', "Bearer " + accessToken.access_token);
-                        },
+                        url: host + "/auth/realms/" + realm + "/protocol/openid-connect/logout",
+                        type: "POST",
+                        data: {refresh_token: accessToken.refresh_token,
+                            client_id: clientId},
+                        headers: {'Authorization': "Bearer " + accessToken.access_token,
+                            'Content-Type': "application/x-www-form-urlencoded"},
+                        /*beforeSend: function (xhr) {
+                         xhr.setRequestHeader('Authorization', "Bearer " + accessToken.access_token);
+                         xhr.setRequestHeader('Content-Type', "application/x-www-form-urlencoded");
+                         xhr.setRequestHeader('Payload', "refresh_token=" + accessToken.refresh_token);
+                         },*/
                         success: function (data) {
-                            console.log("user request");
+                            console.groupCollapsed("userNoAuth -> success");
+                            console.log("Session close");
                             console.log(data);
-                            userInfo = data;
-                            console.log("userInfo = ");
-                            console.log(userInfo);
-                            $("#idId").val(userInfo.sub);
-                            $("#nameId").val(userInfo.preferred_username);
-                            $("#idUserInfo").html("<p>Добро пожаловать: " + userInfo.family_name + " " + userInfo.given_name + "</p>");
-                            setCookie("userId", userInfo.sub, null);
-                            setCookie("userName", username, null);
-
-                            /**
-                             *  Загружаемм основной контент
-                             */
-
-                            $.ajax({
-                                url: host + "/video-rest/list",
-                                data: {username: userInfo.sub},
-                                type: "GET",
-                                beforeSend: function (xhr) {
-                                    xhr.setRequestHeader('Authorization', "Bearer " + accessToken.access_token);
-                                },
-                                success: function (data) {
-                                    console.log("success");
-                                    console.log("data = ");
-                                    console.log(data);
-
-                                    var tBody = $("#idDataTable>tbody:last-child");
-                                    tBody.empty();
-
-                                    var tTh1 = $("<th>");
-                                    var tTh2 = $("<th>");
-                                    var tHRow = $("<tr>");
-
-                                    tTh1.append("Название");
-                                    tTh2.append("URL");
-                                    tHRow.append(tTh1);
-                                    tHRow.append(tTh2);
-                                    tBody.append(tHRow);
-                                    // Раскидываем данные по элементам
-                                    for (var item in data) {
-                                        console.log(data[item]);
-                                        var temp = data[item];
-                                        //console.log($("#idDataTable>tbody:last-child"));
-                                        //$("#idDataTable>tbody:last-child").append("<tr>" + temp.title + "</td><td>" + temp.url + "</td></tr>");
-                                        tBody = $("#idDataTable>tbody:last-child");
-
-                                        var tRow = $("<tr>");
-                                        var tColumn1 = $("<td>");
-                                        var tColumn2 = $("<td>");
-                                        var tUrl = $("<a>").attr('href', temp.url).attr('id', 'xyz_' + item);
-                                        tUrl.append("a");
-                                        //console.log(tUrl);
-
-                                        tColumn1.append(temp.title);
-                                        tColumn2.append(tUrl);
-                                        tRow.append(tColumn1);
-                                        //console.log(tRow);
-                                        tRow.append(tColumn2);
-                                        //console.log(tRow);
-                                        tBody.append(tRow);
-                                    }
-                                    // Загружаемм основной контент
-                                    $("#content").append(data);
-                                }
-                            });
+                            accessToken = new Object();
+                            console.log(accessToken);
+                            console.groupEnd();
+                            deleteCookie("access_token");
+                            $("#idUserInfo").html("<p>До свидания: " + userInfo.firstName + " " + userInfo.lastName + "</p>");
+                            // Очищаем таблицу
+                            $("#idDataTable>tbody:last-child").empty();
                         }
                     });
-                });
+                } catch (exception) {
+                    console.log(exception);
+                }
+
+                console.groupEnd();
             }
+
             //action="http://192.168.1.150:8080/auth/realms/master/protocol/openid-connect/token" method="POST"
         </script>    
-
     </head>
     <body>
         <div id="idLoginMain">
