@@ -2,6 +2,8 @@
   "realm": "videomanager",
   "auth-server-url": "http://192.168.1.150:8080/auth",
   "ssl-required": "external",
-  "resource": "video-rest",
-  "public-client": true
+  "resource": "video-app",
+  "credentials": {
+    "secret": "50c93bab-fe8f-422a-948e-a63c52458ee3"
+  }
 }
