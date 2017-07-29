@@ -6,18 +6,57 @@
 
 /* global kc, exception */
 
-var kc = this;
-kc.host = "http://192.168.1.150:8080";
-kc.realm = "videomanager";
-kc.clientId = "video-app";
-kc.clientSecret = "50c93bab-fe8f-422a-948e-a63c52458ee3";
-kc.sqlStorage = null; // Локальное sqlStorage хранилище
-kc.tableName = "rtkPasportParams"; // Имя таблицы 
-kc.columnName = "f_name";
-kc.columnVal = "f_val";
+/*var kc = this;
+ kc.host = "http://192.168.1.150:8080";
+ kc.realm = "videomanager";
+ kc.clientId = "video-app";
+ kc.clientSecret = "50c93bab-fe8f-422a-948e-a63c52458ee3";
+ kc.sqlStorage = null; // Локальное sqlStorage хранилище
+ kc.tableName = "rtkPasportParams"; // Имя таблицы 
+ kc.columnName = "f_name";
+ kc.columnVal = "f_val";*/
 
-kc.sqlStorage = initSqlStorage();
-initSqlShema(kc.sqlStorage);
+
+
+//kc.sqlStorage = initSqlStorage();
+//initSqlShema(kc.sqlStorage);
+
+/**
+ * 
+ * @param {type} kc
+ * @returns {undefined}
+ */
+function initApp(kc) {
+    console.groupCollapsed("initApp");
+    try {
+        // Читаем данные из файла keycloak.json на сервере
+        var initPromise = new Promise(function (resolve, reject) {
+            console.groupCollapsed("initApp => initPromise");
+            $.ajax({
+                url: "keycloak.json",
+                type: "GET",
+                success: function (data) {
+                    console.groupCollapsed("initApp => initPromise => success");
+                    console.log(data);
+                    console.groupEnd();
+                    resolve(data);
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.groupCollapsed("initApp => initPromise => error");
+                    console.error("textStatus = %s,  errorThrown = %s", textStatus, errorThrown);
+                    console.groupEnd();
+                    reject(errorThrown);
+                }
+            });
+        });
+        return initPromise;
+
+    } catch (exception) {
+        console.error(exception);
+    }
+
+    console.groupEnd();
+}
 
 // Функции для работы с Web SQL Storage
 function initSqlStorage() {
@@ -110,7 +149,6 @@ function deleteCookie(name) {
     } catch (exception) {
         console.log(exception);
     }
-
 }
 
 /**
@@ -149,7 +187,6 @@ function setCookie(name, value, options) {
                 updatedCookie += "=" + propValue;
             }
         }
-
         document.cookie = updatedCookie;
     } catch (exception) {
         console.log(exception);
@@ -166,48 +203,51 @@ function setCookie(name, value, options) {
  * @returns {undefined}
  */
 
-function userLogin(username, password) {
+function userLogin(username, password, param) {
     console.groupCollapsed("userLogin");
     console.profile();
     try {
         console.log("username = %s  password = %s", username, password);
-        var authPromise = userAuth(username, password, kc.host, kc.realm, kc.clientId, kc.clientSecret);
+        var authPromise = userAuth(username, password, param.host, param.realm, kc.clientId, param.clientSecret);
         console.log(authPromise);
-        console.log(kc);
+        console.log(param);
         authPromise.then(function (val) {
             console.groupCollapsed("userLogin => then");
             console.log("val = ");
             console.log(val);
 
-            kc.access_token = val.access_token;
-            kc.id_token = val.id_token;
-            kc.refresh_token = val.refresh_token;
-            kc.session_state = val.session_state;
-            kc.expires_in = val.expires_in;
-            kc.refresh_expires_in = val.refresh_expires_in;
+            param.access_token = val.access_token;
+            param.id_token = val.id_token;
+            param.refresh_token = val.refresh_token;
+            param.session_state = val.session_state;
+            param.expires_in = val.expires_in;
+            param.refresh_expires_in = val.refresh_expires_in;
 
-            console.log("kc = ");
-            console.log(kc);
+
+            console.log("param = ");
+            console.log(param);
             // Устанавливаем куки
-            setCookie("access_token", kc.access_token, {});
-            setCookie("id_token", kc.id_token, {});
-            setCookie("refresh_token", kc.refresh_token, {});
-            setCookie("session_state", kc.session_state, {});
-            setCookie("refresh_expires_in", kc.refresh_expires_in, {});
-            setCookie("expires_in", kc.expires_in, {});
+            setCookie("access_token", param.access_token, {});
+            setCookie("id_token", param.id_token, {});
+            setCookie("refresh_token", param.refresh_token, {});
+            setCookie("session_state", param.session_state, {});
+            setCookie("refresh_expires_in", param.refresh_expires_in, {});
+            setCookie("expires_in", param.expires_in, {});
+            //setCookie("username", username, {});
 
-            setCookie("username", username, {});
-            var userInfoPromise = getUserInfo(username, kc.host, kc.realm, kc.access_token);
+            var userInfoPromise = getUserInfo(username, param.host, param.realm, param.access_token);
             userInfoPromise.then(function (val) {
                 console.groupCollapsed("getUserInfo => then");
                 console.log(val);
-                //setSqlParam(kc.sqlStorage, "access_token", val.access_token);
+
                 //получили информацию о пользователе по OpenID Connect и отображаем на странице
 
                 // Получаем доп информацию о пользователе. Делаем запрос к rest
-                console.log("access_token = %s", kc.access_token);
-
-                var userFullPromise = getUserFullInfo("", "", val.sub, kc.access_token);
+                console.log("access_token = %s", param.access_token);
+                param.userId = val.sub;
+                console.log("param = ");
+                console.log(param);
+                var userFullPromise = getUserFullInfo("", "", val.sub, param.access_token);
                 userFullPromise.then(function (data) {
                     console.groupCollapsed("getUserFullInfo => then");
                     console.log(data);
@@ -248,7 +288,7 @@ function userAuth(username, password, host, realm, clientId, clientSecret) {
     console.group("userAuth");
     try {
         var p1 = new Promise(function (resolve, reject) {
-            $.post(host + "/auth/realms/" + realm + "/protocol/openid-connect/token",
+            $.post(host + "/realms/" + realm + "/protocol/openid-connect/token",
                     {client_id: clientId,
                         password: password,
                         username: username,
@@ -272,14 +312,6 @@ function userAuth(username, password, host, realm, clientId, clientSecret) {
 
 /**
  * 
- * @returns {undefined}
- */
-function getData() {
-
-}
-
-/**
- * 
  * @param {type} host
  * @param {type} realm
  * @param {type} accessToken
@@ -289,7 +321,7 @@ function getOpenIDInfo(host, realm, accessToken) {
     // /realms/{realm-name}/.well-known/openid-configuration
     console.groupCollapsed("userAuth");
     try {
-        $.ajax({url: host + "/auth/realms/" + realm + "/.well-known/openid-configuration",
+        $.ajax({url: host + "/realms/" + realm + "/.well-known/openid-configuration",
             type: "GET",
             beforeSend: function (xhr) {
                 xhr.setRequestHeader('Authorization', "Bearer " + accessToken.access_token);
@@ -326,12 +358,12 @@ function getUserInfo(username, host, realm, accessToken) {
     ///realms/{realm-name}/protocol/openid-connect/userinfo
     console.groupCollapsed("getUserInfo");
     try {
-        console.log("getUserInfo => %s, $s, %s, %s", username, host, realm, accessToken);
+        console.log("getUserInfo => %s, %s, %s, %s", username, host, realm, accessToken);
         console.log("accessToken = %s", accessToken);
         var p2 = new Promise(function (resolve, reject) {
             $.ajax({
                 //"http://192.168.1.150:8080/auth/video-app/realms/" + realm + "/users"
-                url: host + "/auth/realms/" + realm + "/protocol/openid-connect/userinfo",
+                url: host + "/realms/" + realm + "/protocol/openid-connect/userinfo",
                 data: {username: username},
                 type: "GET",
                 beforeSend: function (xhr) {
@@ -343,11 +375,11 @@ function getUserInfo(username, host, realm, accessToken) {
                     console.groupEnd();
                     resolve(data);
                 },
-                error: function (jqXHR, textStatus, errorThrown) {
+                error: function () {
                     console.groupCollapsed("getUserInfo=>error");
-                    console.error("textStatus = %s,  errorThrown = %s", textStatus, errorThrown);
+                    console.error("error %s", "Ошибка");
                     console.groupEnd();
-                    reject(errorThrown);
+                    reject(error);
                 }
             });
         });
@@ -373,7 +405,7 @@ function getUserFullInfo(host, realm, userID, accessToken) {
         var p3 = new Promise(function (resolve, reject) {
             $.ajax({
                 //"http://192.168.1.150:8080/auth/video-app/realms/" + realm + "/users"
-                url: "http://192.168.1.150:8080/testRest/admusers/hello/" + userID,
+                url: this["origin"] + "/testRest/admusers/hello/" + userID,
                 type: "GET",
                 beforeSend: function (xhr) {
                     xhr.setRequestHeader('Authorization', "Bearer " + accessToken);
@@ -399,10 +431,68 @@ function getUserFullInfo(host, realm, userID, accessToken) {
     return p3;
 }
 
+/**
+ * получает обновленный токен на основании refresh_token
+ * @returns {undefined}
+ */
 function refreshToken() {
+    console.groupCollapsed("refreshToken");
+    try {
+
+    } catch (e) {
+        console.error(e);
+    }
+    console.groupEnd();
 
 }
 
+/**
+ * 
+ * @param {type} host
+ * @param {type} realm
+ * @param {type} clientId
+ * @param {type} userid
+ * @param {type} accessToken
+ * @returns {undefined}
+ */
+
+function userCloseAuth(host, realm, clientId, userid, accessToken)
+{
+    ///realms/master/protocol/openid-connect/logout
+    console.groupCollapsed("userNoAuth");
+    console.log("host = %s realm = %s, clientId = %s, accessToken = %s", host, realm, clientId, userid, accessToken);
+    try {
+        $.ajax({
+            url: host + "/realms/" + realm + "/protocol/openid-connect/logout",
+            type: "POST",
+            data: {refresh_token: accessToken.refresh_token,
+                client_id: clientId,
+                user_id: userid},
+            headers: {'Authorization': "Bearer " + accessToken.access_token,
+                'Content-Type': "application/x-www-form-urlencoded"},
+            /*beforeSend: function (xhr) {
+             xhr.setRequestHeader('Authorization', "Bearer " + accessToken.access_token);
+             xhr.setRequestHeader('Content-Type', "application/x-www-form-urlencoded");
+             xhr.setRequestHeader('Payload', "refresh_token=" + accessToken.refresh_token);
+             },*/
+            success: function (data) {
+                console.groupCollapsed("userNoAuth -> success");
+                console.log("Session close");
+                console.log(data);
+                accessToken = new Object();
+                console.log(accessToken);
+                console.groupEnd();
+                deleteCookie("access_token");                
+            }
+        });
+    } catch (exception) {
+        console.log(exception);
+    }
+
+    console.groupEnd();
+}
+
+
 function getTokenInfo() {
-    $("#idTokenInfo").html(getLocalStorageParam("access_token"));
+
 }

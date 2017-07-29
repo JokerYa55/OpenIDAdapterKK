@@ -12,39 +12,68 @@
         <script>
             //var userInfo;
             //var accessToken;
-
+            console.groupCollapsed("index_api");
+            var kc = {};
             $(document).ready(function () {
                 console.log("document.redy");
-                var kc = {};
-                kc.host = "http://192.168.1.150:8080";
-                kc.realm = "videomanager";
-                kc.clientId = "video-app";
-                kc.clientSecret = "50c93bab-fe8f-422a-948e-a63c52458ee3";
-                kc.sqlStorage = null; // Локальное sqlStorage хранилище
-                kc.tableName = "rtkPasportParams"; // Имя таблицы 
-                kc.columnName = "f_name";
-                kc.columnVal = "f_val";
-                kc.access_token = "";
+
+                var initPromise = initApp(kc);
+
+                initPromise.then(data => {
+                    // 
+                    console.group("main => initPromise => then");
+                    console.log(data);
+
+                    kc.host = data["auth-server-url"];
+                    //"http://192.168.1.150:8080";
+                    kc.realm = data["realm"];
+                    //"videomanager";
+                    kc.clientId = data["resource"];
+                    //"video-app";
+                    kc.clientSecret = data["credentials"]["secret"];
+                    //"50c93bab-fe8f-422a-948e-a63c52458ee3";
+                    kc.access_token = getCookie("access_token");
+                    kc.id_token = getCookie("id_token");
+                    kc.refresh_token = getCookie("refresh_token");
+                    kc.session_state = getCookie("session_state");
+                    kc.refresh_expires_in = getCookie("refresh_expires_in");
+                    kc.expires_in = getCookie("expires_in");
+                    kc.username = getCookie("username");
+
+                    console.log("kc global = ");
+                    console.log(kc);
+                    console.log("kc.access_token = %s", kc.access_token);
+                    if (kc["access_token"] === undefined) {
+                        console.log("Куки не установлены");
+                        // Выводим сообщение что нужно авторизоваться
+                        alert("Пожалуйста авторизуйтесь !!!");
+                    } else
+                    {
+                        var username = "appuser";
+                        // Получаем инфо user-a                    
+                        var userInfoPromise = getUserInfo(username, kc.host, kc.realm, kc.access_token);
+                        userInfoPromise.then(function (data) {
+                            console.log(data);
+                        });
+                    }
+
+                    console.groupEnd();
+
+                }).catch(err => {
+                    console.group("initApp => initPromise => catch");
+                    console.error(err);
+                    console.groupEnd();
+                });
+
+                //kc.tableName = "rtkPasportParams"; // Имя таблицы 
+                //kc.columnName = "f_name";
+                //kc.columnVal = "f_val";
+                //kc.sqlStorage = null; // Локальное sqlStorage хранилище
                 //kc.sqlStorage = initSqlStorage();
                 //initSqlShema(kc.sqlStorage);
+                //kc.access_token = getCookie("access_token");
 
-                kc.access_token = getCookie("access_token");
 
-                if (kc.access_token === undefined) {
-                    console.log("Куки не установлены");
-                    // Выводим сообщение что нужно авторизоваться
-                    alert("Пожалуйста авторизуйтесь !!!");
-                } else
-                {
-                    var username = "appuser";
-                    console.log("kc = ");
-                    console.log(kc);
-                    // Получаем инфо user-a                    
-                    var userInfoPromise = getUserInfo(username, kc.host, kc.realm, kc.access_token);
-                    userInfoPromise.then(function (data) {
-                        console.log(data);
-                    });
-                }
                 console.groupEnd();
             });
 
@@ -53,51 +82,15 @@
                 console.group("userLogin()");
                 var username = $("#nameId").val();
                 var password = $("#passwordId").val();
-                userLogin(username, password);
+                userLogin(username, password, kc);
                 console.groupEnd();
             }
 
             /** 
              * Logout
              */
-            function userCloseAuth()
-            {
-                ///realms/master/protocol/openid-connect/logout
-                console.group("userNoAuth()");
-                try {
-                    $.ajax({
-                        url: host + "/auth/realms/" + realm + "/protocol/openid-connect/logout",
-                        type: "POST",
-                        data: {refresh_token: accessToken.refresh_token,
-                            client_id: clientId},
-                        headers: {'Authorization': "Bearer " + accessToken.access_token,
-                            'Content-Type': "application/x-www-form-urlencoded"},
-                        /*beforeSend: function (xhr) {
-                         xhr.setRequestHeader('Authorization', "Bearer " + accessToken.access_token);
-                         xhr.setRequestHeader('Content-Type', "application/x-www-form-urlencoded");
-                         xhr.setRequestHeader('Payload', "refresh_token=" + accessToken.refresh_token);
-                         },*/
-                        success: function (data) {
-                            console.groupCollapsed("userNoAuth -> success");
-                            console.log("Session close");
-                            console.log(data);
-                            accessToken = new Object();
-                            console.log(accessToken);
-                            console.groupEnd();
-                            deleteCookie("access_token");
-                            $("#idUserInfo").html("<p>До свидания: " + userInfo.firstName + " " + userInfo.lastName + "</p>");
-                            // Очищаем таблицу
-                            $("#idDataTable>tbody:last-child").empty();
-                        }
-                    });
-                } catch (exception) {
-                    console.log(exception);
-                }
-
-                console.groupEnd();
-            }
-
-            //action="http://192.168.1.150:8080/auth/realms/master/protocol/openid-connect/token" method="POST"
+           
+            console.groupEnd();
         </script>    
     </head>
     <body>
@@ -132,7 +125,7 @@
                                     <input type="button" value="Вход" onclick="userAuth();"/>                
                                 </td>
                                 <td>
-                                    <input type="button" value="Выход" onclick="userCloseAuth();"/>                
+                                    <input type="button" value="Выход" onclick="userCloseAuth(kc.host, kc.realm, kc.clientId, kc.userId, kc.access_token);"/>                
                                 </td>
                             </tr>
                         </table>
