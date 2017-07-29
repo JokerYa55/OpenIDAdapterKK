@@ -168,6 +168,7 @@ function setCookie(name, value, options) {
 
 function userLogin(username, password) {
     console.groupCollapsed("userLogin");
+    console.profile();
     try {
         console.log("username = %s  password = %s", username, password);
         var authPromise = userAuth(username, password, kc.host, kc.realm, kc.clientId, kc.clientSecret);
@@ -228,7 +229,7 @@ function userLogin(username, password) {
     } catch (exception) {
         console.log(exception);
     }
-
+    console.profileEnd();
     console.groupEnd();
 }
 
@@ -298,14 +299,15 @@ function getOpenIDInfo(host, realm, accessToken) {
                 console.log(data);
                 console.groupEnd();
             },
-            error: function (data) {
+            error: function (jqXHR, textStatus, errorThrown) {
                 console.groupCollapsed("getOpenIDInfo => error");
-                console.error(data);
+                console.error("textStatus = %s,  errorThrown = %s", textStatus, errorThrown);
                 console.groupEnd();
+                reject(errorThrown);
             }
         });
     } catch (exception) {
-        console.log(exception);
+        console.error(exception);
     }
 
     console.groupEnd();
