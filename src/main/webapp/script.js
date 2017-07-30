@@ -227,11 +227,11 @@ function userLogin(username, password, param) {
             console.log("param = ");
             console.log(param);
             // Устанавливаем куки
-            setCookie("access_token", param.access_token, {});
-            setCookie("id_token", param.id_token, {});
-            setCookie("refresh_token", param.refresh_token, {});
-            setCookie("session_state", param.session_state, {});
-            setCookie("refresh_expires_in", param.refresh_expires_in, {});
+            setCookie("access_token", param.access_token, {domain:".test.ru"});
+            setCookie("id_token", param.id_token, {domain:".test.ru"});
+            setCookie("refresh_token", param.refresh_token, {domain:".test.ru"});
+            setCookie("session_state", param.session_state, {domain:".test.ru"});
+            setCookie("refresh_expires_in", param.refresh_expires_in, {domain:".test.ru"});
             setCookie("expires_in", param.expires_in, {});
             //setCookie("username", username, {});
 
