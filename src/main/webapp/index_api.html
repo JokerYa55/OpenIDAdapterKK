@@ -21,7 +21,7 @@
 
                 initPromise.then(data => {
                     // 
-                    console.group("main => initPromise => then");
+                    //console.group("main => initPromise => then");
                     console.log(data);
 
                     kc.host = data["auth-server-url"];
@@ -57,7 +57,7 @@
                         });
                     }
 
-                    console.groupEnd();
+                    //console.groupEnd();
 
                 }).catch(err => {
                     console.group("initApp => initPromise => catch");
