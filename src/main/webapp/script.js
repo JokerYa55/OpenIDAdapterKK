@@ -49,6 +49,7 @@ function initApp(kc) {
                 }
             });
         });
+        console.groupEnd();
         return initPromise;
 
     } catch (exception) {
@@ -187,6 +188,8 @@ function setCookie(name, value, options) {
                 updatedCookie += "=" + propValue;
             }
         }
+
+        console.log(updatedCookie);
         document.cookie = updatedCookie;
     } catch (exception) {
         console.log(exception);
@@ -200,11 +203,12 @@ function setCookie(name, value, options) {
  * 
  * @param {type} username
  * @param {type} password
+ * @param {type} param
  * @returns {undefined}
  */
 
 function userLogin(username, password, param) {
-    console.groupCollapsed("userLogin");
+    console.group("userLogin");
     console.profile();
     try {
         console.log("username = %s  password = %s", username, password);
@@ -227,11 +231,12 @@ function userLogin(username, password, param) {
             console.log("param = ");
             console.log(param);
             // Устанавливаем куки
-            setCookie("access_token", param.access_token, {domain:".test.ru"});
-            setCookie("id_token", param.id_token, {domain:".test.ru"});
-            setCookie("refresh_token", param.refresh_token, {domain:".test.ru"});
-            setCookie("session_state", param.session_state, {domain:".test.ru"});
-            setCookie("refresh_expires_in", param.refresh_expires_in, {domain:".test.ru"});
+            //domain:".test.ru:8080", path:"/"
+            setCookie("access_token", param.access_token, {});
+            setCookie("id_token", param.id_token, {});
+            setCookie("refresh_token", param.refresh_token, {});
+            setCookie("session_state", param.session_state, {});
+            setCookie("refresh_expires_in", param.refresh_expires_in, {});
             setCookie("expires_in", param.expires_in, {});
             //setCookie("username", username, {});
 
@@ -435,9 +440,24 @@ function getUserFullInfo(host, realm, userID, accessToken) {
  * получает обновленный токен на основании refresh_token
  * @returns {undefined}
  */
-function refreshToken() {
+function refreshToken(param) {
     console.groupCollapsed("refreshToken");
     try {
+
+        var p1 = new Promise(function (resolve, reject) {
+            $.post(host + "/realms/" + realm + "/protocol/openid-connect/token",
+                    {client_id: clientId,
+                        refresh_token: param.refresh_token,                        
+                        client_secret: param.clientSecret,
+                        grant_type: "refresh_token"}).done(function (data) {
+                console.groupCollapsed("userAuth => done");
+                console.log(data);
+                console.groupEnd();
+                resolve(data);
+            }).fail(function () {
+                reject();
+            });
+        });
 
     } catch (e) {
         console.error(e);
@@ -482,7 +502,7 @@ function userCloseAuth(host, realm, clientId, userid, accessToken)
                 accessToken = new Object();
                 console.log(accessToken);
                 console.groupEnd();
-                deleteCookie("access_token");                
+                deleteCookie("access_token");
             }
         });
     } catch (exception) {
