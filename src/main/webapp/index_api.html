@@ -10,8 +10,7 @@
         <script src="jquery-3.2.1.js"></script>
 
         <script>
-            //var userInfo;
-            //var accessToken;
+
             console.groupCollapsed("index_api");
             var kc = {};
             $(document).ready(function () {
@@ -20,12 +19,11 @@
                 var initPromise = initApp(kc);
 
                 initPromise.then(data => {
-                    // 
-                    //console.group("main => initPromise => then");
+                    // Если инициализация прошла успешно. Файл keycloak.json получен
+                    console.group("main => initPromise => then");
                     console.log(data);
 
                     kc.host = data["auth-server-url"];
-                    //"http://192.168.1.150:8080";
                     kc.realm = data["realm"];
                     //"videomanager";
                     kc.clientId = data["resource"];
@@ -54,10 +52,12 @@
                         var userInfoPromise = getUserInfo(username, kc.host, kc.realm, kc.access_token);
                         userInfoPromise.then(function (data) {
                             console.log(data);
+                        }).catch(function(data){
+                            console.log(data);
                         });
                     }
 
-                    //console.groupEnd();
+                    console.groupEnd();
 
                 }).catch(err => {
                     console.group("initApp => initPromise => catch");
