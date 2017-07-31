@@ -7,15 +7,24 @@ and open the template in the editor.
 <html>
     <head>
         <script src="openIdConnect.js"></script>
+        <script src="jquery-3.2.1.js"></script>
         <script>
-            var openID = new OpenIDConnect();
-            openID.onInit = function (data) {
-                console.log(data);
-            }
-            openID.Init();
-
+            $(document).ready(function () {
+                $("#idBtnTest").prop('disabled', true);
+                var openID = new OpenIDConnect();
+                openID.onInit = function (data) {
+                    console.log(data);
+                };
+                openID.Init();
+                openID.onInit = function(data){
+                    console.log("openID.onInit");
+                    console.log(data);
+                    $("#idBtnTest").prop('disabled', false);
+                };
+            });
         </script>
     </head>	
     <body>
+        <button onclick="alert(1);" id="idBtnTest">test</button>
     </body>
 </html>
