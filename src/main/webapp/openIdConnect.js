@@ -19,7 +19,7 @@ function OpenIDConnect() {
      * Инициализируется объект. Читаются даные с openid_connect.json
      * @returns {undefined}
      */
-     
+
     this.Init = function () {
         try {
             console.group("OpenIDConnect");
@@ -37,15 +37,32 @@ function OpenIDConnect() {
                         console.groupEnd();
                         resolve(data);
                     },
-                    error: function (jqXHR, textStatus, errorThrown) {
+                    error: function () {
                         console.groupCollapsed("initApp => initPromise => error");
-                        console.error("textStatus = %s,  errorThrown = %s", textStatus, errorThrown);
                         console.groupEnd();
-                        reject(errorThrown);
+                        var err = new Error("File openID.json not found");
+                        reject(err);
                     }
                 });
             });
-
+            // Обрабатываем полученные настройки
+            initPromise.then(
+                    result => {
+                        // Если файл загрузился успешно устанавливаем значения в поля класса из полученого файла
+                        console.log("initPromise.ok");
+                        this.host = result["auth-server-url"];
+                        this.realm = result["realm"];
+                        //"videomanager";
+                        this.clientId = result["resource"];
+                        //"video-app";
+                        this.clientSecret = result["credentials"]["secret"];
+                        this.onInit(this);
+                    },
+                    error => {
+                        console.log("initPromise.error");
+                        this.onInitError(error);
+                    }
+            );
             this.onInit(this);
             console.groupEnd();
         } catch (err) {
