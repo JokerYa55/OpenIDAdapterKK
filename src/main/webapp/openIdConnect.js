@@ -14,6 +14,10 @@ function OpenIDConnect() {
     this.expires_in = "";
     this.user_name = "";
     this.user_id = "";
+    this.host = "";
+    this.realm = "";
+    this.clientId = "";
+    this.clientSecret = "";
 
     /***************************************************************
      ************** работа с Cookie *********************************
@@ -158,15 +162,15 @@ function OpenIDConnect() {
      * 
      * @returns {undefined}
      */
-    
+
     this.readCookie = function () {
         console.log("readCookie");
-        this.access_token           = getCookie("access_token");
-        this.id_token               = getCookie("id_token");
-        this.refresh_token          = getCookie("refresh_token");
-        this.session_state          = getCookie("session_state");
-        this.refresh_expires_in     = getCookie("refresh_expires_in");
-        this.expires_in             = getCookie("expires_in");
+        this.access_token = getCookie("access_token");
+        this.id_token = getCookie("id_token");
+        this.refresh_token = getCookie("refresh_token");
+        this.session_state = getCookie("session_state");
+        this.refresh_expires_in = getCookie("refresh_expires_in");
+        this.expires_in = getCookie("expires_in");
     };
 
     /**
@@ -178,9 +182,41 @@ function OpenIDConnect() {
      * @returns {undefined}
      */
 
+     //http://test.ru:8080/auth/realms/videomanager/protocol/openid-connect/token
+     //http://test.ru:8080/auth/realms/videomanager/protocol/openid-connect/token
+
+
+     // TODO: доработать ошибка при формировании списка передаваемых переменных. Не передается client_id и client_secret
     this.Connect = function (username, password) {
         try {
-            this.onConnect(this);
+            console.log("this.Connect => " + this.host + "/realms/" + this.realm + "/protocol/openid-connect/token");
+            var url = this.host + "/realms/" + this.realm + "/protocol/openid-connect/token";
+            console.log("URL = %s  client_id = %s", url, this.clientId);
+            console.log(this);
+            var client_id = this.clientId;
+            var client_secret = this.clientSecret;
+            var connectPromise = new Promise(function (resolve, reject) {
+                $.post(url,
+                        {client_id: client_id,
+                            password: password,
+                            username: username,
+                            client_secret: client_secret,
+                            grant_type: "password"}).done(function (data) {
+                    console.groupCollapsed("userAuth => done");
+                    console.log(data);
+                    console.groupEnd();
+                    resolve(data);
+                }).fail(function () {
+                    reject();
+                });
+            });
+
+            connectPromise.then(result => {
+                this.onConnect(result);
+            }, 
+            error => {
+                this.onConnectError(error);
+            });
         } catch (err) {
             console.log(err);
             this.onConnectError(err);
