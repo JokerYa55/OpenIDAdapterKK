@@ -15,6 +15,89 @@ function OpenIDConnect() {
     this.user_name = "";
     this.user_id = "";
 
+    /***************************************************************
+     ************** работа с Cookie *********************************
+     ***************************************************************/
+
+    /**
+     * 
+     * @param {type} name
+     * @returns {undefined}
+     */
+
+    function getCookie(name) {
+        console.groupCollapsed("getCookie");
+        console.log("getCookie => " + name);
+        var matches = document.cookie.match(new RegExp(
+                "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
+                ));
+        console.groupEnd();
+        return matches ? decodeURIComponent(matches[1]) : undefined;
+    }
+
+    /**
+     * 
+     * @param {type} name
+     * @returns {undefined}
+     */
+
+    function deleteCookie(name) {
+        console.groupCollapsed("deleteCookie");
+        try {
+            console.log("deleteCookie => %s", name);
+            setCookie(name, "", {
+                expires: -1
+            });
+        } catch (exception) {
+            console.log(exception);
+        }
+    }
+
+    /**
+     * 
+     * @param {type} name
+     * @param {type} value
+     * @param {type} options
+     * @returns {undefined}
+     */
+
+    function setCookie(name, value, options) {
+        console.groupCollapsed("setCookie");
+        try {
+            console.log("setCookie => %s, %s, %s", name, value, options);
+            options = options || {};
+
+            var expires = options.expires;
+
+            if (typeof expires === "number" && expires) {
+                var d = new Date();
+                d.setTime(d.getTime() + expires * 1000);
+                expires = options.expires = d;
+            }
+            if (expires && expires.toUTCString) {
+                options.expires = expires.toUTCString();
+            }
+
+            value = encodeURIComponent(value);
+
+            var updatedCookie = name + "=" + value;
+
+            for (var propName in options) {
+                updatedCookie += "; " + propName;
+                var propValue = options[propName];
+                if (propValue !== true) {
+                    updatedCookie += "=" + propValue;
+                }
+            }
+
+            console.log(updatedCookie);
+            document.cookie = updatedCookie;
+        } catch (exception) {
+            console.log(exception);
+        }
+        console.groupEnd();
+    }
+
     /**
      * Инициализируется объект. Читаются даные с openid_connect.json
      * @returns {undefined}
@@ -52,10 +135,10 @@ function OpenIDConnect() {
                         console.log("initPromise.ok");
                         this.host = result["auth-server-url"];
                         this.realm = result["realm"];
-                        //"videomanager";
                         this.clientId = result["resource"];
-                        //"video-app";
                         this.clientSecret = result["credentials"]["secret"];
+                        // Читаем куки и устанавливаем параметры
+                        this.readCookie();
                         this.onInit(this);
                     },
                     error => {
@@ -69,6 +152,21 @@ function OpenIDConnect() {
             console.log(err);
             this.onInitError(err);
         }
+    };
+
+    /**
+     * 
+     * @returns {undefined}
+     */
+    
+    this.readCookie = function () {
+        console.log("readCookie");
+        this.access_token           = getCookie("access_token");
+        this.id_token               = getCookie("id_token");
+        this.refresh_token          = getCookie("refresh_token");
+        this.session_state          = getCookie("session_state");
+        this.refresh_expires_in     = getCookie("refresh_expires_in");
+        this.expires_in             = getCookie("expires_in");
     };
 
     /**
