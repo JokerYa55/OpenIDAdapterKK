@@ -1,0 +1,9 @@
+{
+    "realm": "videomanager",
+    "auth-server-url": "http://test.ru:8080/auth",
+    "ssl-required": "external",
+    "resource": "video-app",
+    "credentials": {
+        "secret": "50c93bab-fe8f-422a-948e-a63c52458ee3"
+    }
+}

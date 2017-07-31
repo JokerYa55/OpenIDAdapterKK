@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <script src="openIdConnect.js"></script>
+        <script>
+            var openID = new OpenIDConnect();
+            openID.onInit = function (data) {
+                console.log(data);
+            }
+            openID.Init();
+
+        </script>
+    </head>	
+    <body>
+    </body>
+</html>
