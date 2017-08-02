@@ -23,9 +23,14 @@ and open the template in the editor.
 
                 openID.onConnect = function (data1) {
                     console.log("openID.onConnect");
-                    console.log(openID);
-                   
-                    openID.RefreshToken(data1);
+                    console.log(data1);
+
+                    this.access_token = data1.access_token;
+                    this.id_token = data1.id_token;
+                    this.refresh_token = data1.refresh_token;
+                    console.log(data1.access_token);
+                    console.log(this);
+                    openID.getUserInfo();
                 };
 
 
@@ -33,6 +38,7 @@ and open the template in the editor.
                 console.log(openID);
 
                 openID.Init();
+
                 openID.onInit = function (data) {
                     console.log("openID.onInit");
                     console.log(data);
