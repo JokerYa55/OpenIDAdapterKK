@@ -17,7 +17,7 @@ function OpenIDConnect() {
     this.host = "";
     this.realm = "";
     this.clientId = "";
-    this.clientSecret = "";
+    this.client_secret = "";
 
     /***************************************************************
      ************** работа с Cookie *********************************
@@ -103,9 +103,30 @@ function OpenIDConnect() {
     }
 
     /**
+     * 
+     * @returns {undefined}
+     */
+
+    this.readCookie = function () {
+        console.log("readCookie");
+        this.access_token = getCookie("access_token");
+        this.id_token = getCookie("id_token");
+        this.refresh_token = getCookie("refresh_token");
+        this.session_state = getCookie("session_state");
+        this.refresh_expires_in = getCookie("refresh_expires_in");
+        this.expires_in = getCookie("expires_in");
+    };
+
+    /**************************************************************************/
+
+    /**
      * Инициализируется объект. Читаются даные с openid_connect.json
      * @returns {undefined}
      */
+
+    this.TestFunc = function () {
+        
+    }; 
 
     this.Init = function () {
         try {
@@ -158,20 +179,6 @@ function OpenIDConnect() {
         }
     };
 
-    /**
-     * 
-     * @returns {undefined}
-     */
-
-    this.readCookie = function () {
-        console.log("readCookie");
-        this.access_token = getCookie("access_token");
-        this.id_token = getCookie("id_token");
-        this.refresh_token = getCookie("refresh_token");
-        this.session_state = getCookie("session_state");
-        this.refresh_expires_in = getCookie("refresh_expires_in");
-        this.expires_in = getCookie("expires_in");
-    };
 
     /**
      * Функция выполняет авторизацию по протоколк openID Connect и в случае успеха устанавливает значения в поля объекта. 
@@ -182,11 +189,10 @@ function OpenIDConnect() {
      * @returns {undefined}
      */
 
-     //http://test.ru:8080/auth/realms/videomanager/protocol/openid-connect/token
-     //http://test.ru:8080/auth/realms/videomanager/protocol/openid-connect/token
+    //http://test.ru:8080/auth/realms/videomanager/protocol/openid-connect/token
 
 
-     // TODO: доработать ошибка при формировании списка передаваемых переменных. Не передается client_id и client_secret
+    // TODO: доработать ошибка при формировании списка передаваемых переменных. Не передается client_id и client_secret
     this.Connect = function (username, password) {
         try {
             console.log("this.Connect => " + this.host + "/realms/" + this.realm + "/protocol/openid-connect/token");
@@ -194,7 +200,7 @@ function OpenIDConnect() {
             console.log("URL = %s  client_id = %s", url, this.clientId);
             console.log(this);
             var client_id = this.clientId;
-            var client_secret = this.clientSecret;
+            var client_secret = this.client_secret;
             var connectPromise = new Promise(function (resolve, reject) {
                 $.post(url,
                         {client_id: client_id,
@@ -213,15 +219,49 @@ function OpenIDConnect() {
 
             connectPromise.then(result => {
                 this.onConnect(result);
-            }, 
-            error => {
-                this.onConnectError(error);
-            });
+            },
+                    error => {
+                        this.onConnectError(error);
+                    });
         } catch (err) {
-            console.log(err);
+            console.error(err);
             this.onConnectError(err);
         }
     };
+
+    /**
+     * 
+     * @param {type} data
+     * @returns {undefined}
+     */
+    this.RefreshToken = function (data) {
+        try {
+            console.log("this.refreshToken");
+            var refreshTokenPromise = new Promise(function (resolve, reject) {
+                $.post(host + "/realms/" + realm + "/protocol/openid-connect/token",
+                        {
+                            refresh_token: this.refresh_token,
+                            client_secret: this.clientSecret,
+                            grant_type: "refresh_token"}).done(function (data) {
+                    console.groupCollapsed("userAuth => done");
+                    console.log(data);
+                    resolve(data);
+                }).fail(function () {
+                    reject();
+                });
+            });
+
+            refreshTokenPromise.then(result => {
+                this.onRefreshToken(result);
+            },
+                    error => {
+                        this.onRefreshTokenError(error);
+                    });
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
 
     /**
      * Функция вызывается при успешной инициализации. Получает на вход ссылку на this
@@ -251,7 +291,6 @@ function OpenIDConnect() {
      * @returns {undefined}
      */
 
-
     this.onConnect = function (data) {
         console.log("onConnect");
         console.log(data);
@@ -265,6 +304,28 @@ function OpenIDConnect() {
 
     this.onConnectError = function (error) {
         console.log("onConnectError");
+        console.log(error);
+    };
+
+
+    /**
+     * 
+     * @param {type} data
+     * @returns {undefined}
+     */
+
+    this.onRefreshToken = function (data) {
+        console.log("onRefreshToken");
+        console.log(data);
+    };
+
+    /**
+     * 
+     * @param {type} error
+     * @returns {undefined}
+     */
+    this.onRefreshTokenError = function (error) {
+        console.log("onRefreshTokenError");
         console.log(error);
     };
 
