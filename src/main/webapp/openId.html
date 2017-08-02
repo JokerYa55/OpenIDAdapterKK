@@ -15,17 +15,39 @@ and open the template in the editor.
                 openID.onInit = function (data) {
                     console.log(data);
                 };
+
+                openID.onRefreshToken = function (data1) {
+                    console.log("openID.onRefreshToken");
+                    console.log(data1);
+                };
+
+                openID.onConnect = function (data1) {
+                    console.log("openID.onConnect");
+                    console.log(openID);
+                   
+                    openID.RefreshToken(data1);
+                };
+
+
+
+                console.log(openID);
+
                 openID.Init();
-                openID.onInit = function(data){
+                openID.onInit = function (data) {
                     console.log("openID.onInit");
                     console.log(data);
-                    $("#idBtnTest").prop('disabled', false);
+                    //$("#idBtnTest").prop('disabled', false);                   
                     openID.Connect("appuser", "123");
+
                 };
+
             });
+
+
         </script>
     </head>	
     <body>
         <button onclick="alert(1);" id="idBtnTest">test</button>
+
     </body>
 </html>
