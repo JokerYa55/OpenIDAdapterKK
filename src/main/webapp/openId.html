@@ -1,59 +1,105 @@
-<!DOCTYPE html>
-<!--
-To change this license header, choose License Headers in Project Properties.
-To change this template file, choose Tools | Templates
-and open the template in the editor.
--->
 <html>
     <head>
         <script src="openIdConnect.js"></script>
         <script src="jquery-3.2.1.js"></script>
         <script>
+
+            function decodeToken(str) {
+                str = str.split('.')[1];
+
+                str = str.replace('/-/g', '+');
+                str = str.replace('/_/g', '/');
+                switch (str.length % 4)
+                {
+                    case 0:
+                        break;
+                    case 2:
+                        str += '==';
+                        break;
+                    case 3:
+                        str += '=';
+                        break;
+                    default:
+                        throw 'Invalid token';
+                }
+
+                str = (str + '===').slice(0, str.length + (str.length % 4));
+                str = str.replace(/-/g, '+').replace(/_/g, '/');
+
+                str = decodeURIComponent(escape(atob(str)));
+
+                str = JSON.parse(str);
+                return str;
+            }
+
+            var openID = new OpenIDConnect();
+
+            /*openID.onInit = function (data) {
+             console.log(data);
+             };*/
+
+            /*openID.onRefreshToken = function (data1) {
+                console.log("openID.onRefreshToken");
+                console.log(data1);
+            };*/
+
+            openID.onConnect = function (data1) {
+                console.log("openID.onConnect");
+                console.log(data1);
+
+                this.access_token = data1.access_token;
+                this.id_token = data1.id_token;
+                this.refresh_token = data1.refresh_token;
+                console.log(decodeToken(data1.id_token));
+                //console.log(decodeToken(data1.access_token));
+                //console.log(this);
+                //openID.getUserInfo();
+            };
+
+            openID.onInit = function (data) {
+                console.log("openID.onInit");
+                console.log(data);
+                //$("#idBtnTest").prop('disabled', false);  
+                var username = $('#idName').val();
+                var password = $('#idPassword').val();
+                //openID.Connect(username, password);
+
+            };
+
             $(document).ready(function () {
-                $("#idBtnTest").prop('disabled', true);
-                var openID = new OpenIDConnect();
-                openID.onInit = function (data) {
-                    console.log(data);
-                };
-
-                openID.onRefreshToken = function (data1) {
-                    console.log("openID.onRefreshToken");
-                    console.log(data1);
-                };
-
-                openID.onConnect = function (data1) {
-                    console.log("openID.onConnect");
-                    console.log(data1);
-
-                    this.access_token = data1.access_token;
-                    this.id_token = data1.id_token;
-                    this.refresh_token = data1.refresh_token;
-                    console.log(data1.access_token);
-                    console.log(this);
-                    openID.getUserInfo();
-                };
-
-
-
-                console.log(openID);
-
-                openID.Init();
-
-                openID.onInit = function (data) {
-                    console.log("openID.onInit");
-                    console.log(data);
-                    //$("#idBtnTest").prop('disabled', false);                   
-                    openID.Connect("appuser", "123");
-
-                };
-
+                //$("#idBtnTest").prop('disabled', true)                
             });
+
+            function connect() {
+                console.log(openID);
+                openID.Init();
+            }
 
 
         </script>
     </head>	
     <body>
-        <button onclick="alert(1);" id="idBtnTest">test</button>
+        <table>
+            <tr>
+                <td>
+                    User
+                </td>
+                <td>
+                    <input type="text" id="idName" value="appuser"/>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Password
+                </td>
+                <td>
+                    <input type="password" id="idPassword" value="123"/>
+                </td>
+
+            </tr>
+        </table>    
+
+        <button onclick="connect();" id="idBtnTest">test</button>
 
     </body>
 </html>

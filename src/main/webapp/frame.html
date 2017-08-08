@@ -82,11 +82,14 @@ and open the template in the editor.
             }
             function loadUserInfo() {
                 keycloak.loadUserInfo().success(function (userInfo) {
+
                     //output(userInfo);
                     console.log(userInfo)
                     userData = userInfo;
                     top.postMessage('ok', '*');
                     top.postMessage(userData, '*');
+                    //var kk = keycloak;
+                    //top.postMessage(kk, '*');
                     if (userInfo.middlename == undefined)
                         userInfo.middlename = '';
                     if (userInfo.given_name == undefined)
@@ -209,11 +212,18 @@ and open the template in the editor.
                 keycloak.init(initOptions).success(function (authenticated) {
                     output('Init Success (' + (authenticated ? 'Authenticated' : 'Not Authenticated') + ')');
                     console.log('Authenticated:' + authenticated);
+                    console.log(keycloak);
                     if (authenticated)
                     {
                         console.log("Yes");
                         top.postMessage('logout', '*');
                         top.postMessage('refresh', '*');
+                        var token = {access_token: keycloak.token,
+                            refresh_token: keycloak.refreshToken,
+                            id_token: keycloak.idToken};
+                        console.log("idToken = %s", keycloak.idToken);
+                        console.log("Token = %s", keycloak.token);
+                        top.postMessage(token, "*");
                         document.getElementById("loginbtn").style.display = 'none';
                         loadUserInfo();
                     } else {
@@ -239,7 +249,7 @@ and open the template in the editor.
             <button id="loginbtn" onclick="loginUser()">Войти</button>
             <button id="logoutbtn" onclick="logoutUser()">Выйти</button>
 
-            
+
             <button onclick="keycloak.register()">Регистрация</button>
             <button onclick="refreshToken(9999)">Refresh Token</button>
             <button onclick="refreshToken(30)">Refresh Token (if <30s validity)</button>
@@ -253,7 +263,7 @@ and open the template in the editor.
             <button onclick="output(keycloak.createLoginUrl())">Show Login URL</button>
             <button onclick="output(keycloak.createLogoutUrl())">Show Logout URL</button>
             <button onclick="output(keycloak.createRegisterUrl())">Show Register URL</button>
-            
+
             <a id="profilelink" href="https://192.168.1.150:8080/auth/realms/photoz/account/?main=http://192.168.1.150:8080/demoAuthWAR-1/login.html.html" >Редактировать профиль</a>
         </div>
 

@@ -11,10 +11,10 @@
             var keycloak = Keycloak();
 
             function getToken() {
-                $.post("http://192.168.1.150:8080/auth/realms/videomanager/protocol/openid-connect/token",
+                $.post("http://test.ru:8080/auth/realms/videomanager/protocol/openid-connect/token",
                         {client_id: "video-app",
-                            password: "123",
-                            username: "appuser",
+                            password: "1q2w",
+                            username: "user05",
                             grant_type: "password"})
                         .done(function (data) {
                             console.log(data);
@@ -157,7 +157,7 @@
     </tr>
     <tr>
         <td colspan="2">
-            <button onclick="getToken()">Отправить</button>
+            <button onclick="checkauth()">Отправить</button>
         </td>
     </tr>
 </table>

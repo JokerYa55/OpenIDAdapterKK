@@ -16,8 +16,20 @@ function OpenIDConnect() {
     this.user_id = "8a481639-e8e6-426f-8f98-88fcb338913c";
     this.host = "";
     this.realm = "";
-    this.clientId = "";
+    this.client_id = "";
     this.client_secret = "";
+
+    this.decode_base64 = function (s) {
+        var b = l = 0, r = '',
+                m = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'.split('');
+        s.split('').forEach(function (v) {
+            b = (b << 6) + m.indexOf(v);
+            l += 6;
+            while (l >= 8)
+                r += String.fromCharCode((b >>> (l -= 8)) & 0xff);
+        });
+        return r;
+    };
 
     /***************************************************************
      ************** работа с Cookie *********************************
@@ -31,7 +43,7 @@ function OpenIDConnect() {
 
     this.getCookie = function (name) {
         //console.groupCollapsed("getCookie");
-        console.log("getCookie => " + name);
+        //console.log("getCookie => " + name);
         var matches = document.cookie.match(new RegExp(
                 "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
                 ));
@@ -46,9 +58,9 @@ function OpenIDConnect() {
      */
 
     this.deleteCookie = function (name) {
-        console.groupCollapsed("deleteCookie");
+        //console.groupCollapsed("deleteCookie");
         try {
-            console.log("deleteCookie => %s", name);
+            //console.log("deleteCookie => %s", name);
             setCookie(name, "", {
                 expires: -1
             });
@@ -66,9 +78,9 @@ function OpenIDConnect() {
      */
 
     this.setCookie = function (name, value, options) {
-        console.groupCollapsed("setCookie");
+        //console.groupCollapsed("setCookie");
         try {
-            console.log("setCookie => %s, %s, %s", name, value, options);
+            //console.log("setCookie => %s, %s, %s", name, value, options);
             options = options || {};
 
             var expires = options.expires;
@@ -94,12 +106,12 @@ function OpenIDConnect() {
                 }
             }
 
-            console.log(updatedCookie);
+            //console.log(updatedCookie);
             document.cookie = updatedCookie;
         } catch (exception) {
             console.log(exception);
         }
-        console.groupEnd();
+        //console.groupEnd();
     };
 
     /**
@@ -108,7 +120,7 @@ function OpenIDConnect() {
      */
 
     this.readCookie = function () {
-        console.log("readCookie");
+        //console.log("readCookie");
         this.access_token = this.getCookie("access_token");
         this.id_token = this.getCookie("id_token");
         this.refresh_token = this.getCookie("refresh_token");
@@ -140,13 +152,13 @@ function OpenIDConnect() {
                     url: "openID.json",
                     type: "GET",
                     success: function (data) {
-                        //console.groupCollapsed("initApp => initPromise => success");
+                        console.log("initApp => initPromise => success");
                         console.log(data);
                         //console.groupEnd();
                         resolve(data);
                     },
                     error: function () {
-                        //console.groupCollapsed("initApp => initPromise => error");
+                        console.groupCollapsed("initApp => initPromise => error");
                         //console.groupEnd();
                         var err = new Error("File openID.json not found");
                         reject(err);
@@ -158,12 +170,16 @@ function OpenIDConnect() {
                     result => {
                         // Если файл загрузился успешно устанавливаем значения в поля класса из полученого файла
                         console.log("initPromise.ok");
+                        console.log("result");
+                        console.log(result);
                         this.host = result["auth-server-url"];
                         this.realm = result["realm"];
-                        this.clientId = result["resource"];
+                        this.client_id = result["resource"];
                         this.client_secret = result["credentials"]["secret"];
+                        console.log("this");
+                        console.log(this);
                         // Читаем куки и устанавливаем параметры
-                        this.readCookie();
+                        //this.readCookie();
                         this.onInit(this);
                     },
                     error => {
@@ -196,32 +212,36 @@ function OpenIDConnect() {
     this.Connect = function (username, password) {
         try {
             console.log("this.Connect => " + this.host + "/realms/" + this.realm + "/protocol/openid-connect/token");
-            var url = this.host + "/realms/" + this.realm + "/protocol/openid-connect/token";
-            console.log("URL = %s  client_id = %s", url, this.clientId);
-            console.log(this);
-            var client_id = this.clientId;
-            var client_secret = this.client_secret;
+            var clientId = this.clientId;
+            var clientSecret = this.client_secret;
+            var realmTemp = this.realm;
+            var hostTemp = this.host;
             this.user_name = username;
+            var url_1 = hostTemp + "/realms/" + realmTemp + "/protocol/openid-connect/token";
+            console.log("url_1 = %s  client_id = %s", url_1, clientId);
             var connectPromise = new Promise(function (resolve, reject) {
-                $.post(url,
-                        {client_id: client_id,
-                            password: password,
-                            username: username,
-                            client_secret: client_secret,
-                            grant_type: "password"}).done(function (data) {
+                $.post(url_1,
+                        {"client_id": clientId,
+                            'password': password,
+                            'username': username,
+                            'client_secret': clientSecret,
+                            'grant_type': "password"}).done(function (data) {
                     //console.groupCollapsed("userAuth => done");
-                    console.log(data);
+                    console.log("url_1 = %s", url_1);
                     //console.groupEnd();
                     resolve(data);
                 }).fail(function () {
+                    console.log("url_1 = %s", url_1);
                     reject();
                 });
             });
 
             connectPromise.then(result => {
+                console.log("connectPromise.then");
                 this.onConnect(result);
             },
                     error => {
+                        console.log("connectPromise.error");
                         this.onConnectError(error);
                     });
         } catch (err) {
@@ -235,95 +255,95 @@ function OpenIDConnect() {
      * @param {type} data
      * @returns {undefined}
      */
-    this.RefreshToken = function (data) {
-        try {
-            console.log("this.refreshToken");
-            console.log(this.host + "/realms/" + this.realm + "/protocol/openid-connect/token");
-            var url = this.host + "/realms/" + this.realm + "/protocol/openid-connect/token";
-            var refreshToken = this.refresh_token;
-            var clientSecret = this.client_secret;
-            var id = this.clientId;
-            var userid = this.user_id;
-            var refreshTokenPromise = new Promise(function (resolve, reject) {
-                $.post(url,
-                        {
-                            refresh_token: refreshToken,
-                            //user_id : userid,
-                            //client_id : id,
-                            //client_secret: clientSecret,
-                            grant_type: "refresh_token"}).done(function (data) {
-                    //console.groupCollapsed("userAuth => done");
-                    console.log(data);
-                    resolve(data);
-                }).fail(function () {
-                    reject();
-                });
-            });
+    /* this.RefreshToken = function (data) {
+     try {
+     console.log("this.refreshToken");
+     console.log(this.host + "/realms/" + this.realm + "/protocol/openid-connect/token");
+     var url = this.host + "/realms/" + this.realm + "/protocol/openid-connect/token";
+     var refreshToken = this.refresh_token;
+     var clientSecret = this.client_secret;
+     var id = this.clientId;
+     var userid = this.user_id;
+     var refreshTokenPromise = new Promise(function (resolve, reject) {
+     $.post(url,
+     {
+     refresh_token: refreshToken,
+     //user_id : userid,
+     //client_id : id,
+     //client_secret: clientSecret,
+     grant_type: "refresh_token"}).done(function (data) {
+     //console.groupCollapsed("userAuth => done");
+     console.log(data);
+     resolve(data);
+     }).fail(function () {
+     reject();
+     });
+     });
+     
+     refreshTokenPromise.then(result => {
+     this.onRefreshToken(result);
+     },
+     error => {
+     this.onRefreshTokenError(error);
+     });
+     } catch (e) {
+     console.error(e);
+     }
+     };*/
 
-            refreshTokenPromise.then(result => {
-                this.onRefreshToken(result);
-            },
-                    error => {
-                        this.onRefreshTokenError(error);
-                    });
-        } catch (e) {
-            console.error(e);
-        }
-    };
-
-    this.getUserInfo = function () {
-        try {
-            console.log("getUserInfo => %s, %s, %s", this.username, this.host, this.realm);            
-            console.log("this.access_token = " + this.access_token);
-            var host = this.host;
-            var realm = this.realm;
-            var accessToken = this.access_token;
-            var username = this.user_name;
-            console.log(host + "/realms/" + realm + "/protocol/openid-connect/userinfo");
-            var userInfoPromise = new Promise(function (resolve, reject) {
-                $.ajax({
-                    //"http://192.168.1.150:8080/auth/video-app/realms/" + realm + "/users"
-                    url: host + "/realms/" + realm + "/protocol/openid-connect/userinfo",
-                    data: {username: username},
-                    type: "GET",
-                    beforeSend: function (xhr) {
-                        xhr.setRequestHeader('Authorization', "Bearer " + accessToken);
-                    },
-                    success: function (data) {
-                        //console.groupCollapsed("getUserInfo=>success");
-                        //console.log(data);
-                        //console.groupEnd();
-                        resolve(data);
-                    },
-                    error: function () {
-                        //console.groupCollapsed("getUserInfo=>error");
-                        console.log("error %s", "ERROR");
-                        //console.groupEnd();
-                        reject();
-                    }
-                });
-            });
-            userInfoPromise.then(result => {
-                this.onGetUserInfo(result);
-            },
-                    error => {
-                        this.onGetUserInfoError(error);
-                    });
-        } catch (exception) {
-            console.error(exception);
-        }
-    };
-
-    this.onGetUserInfo = function (data) {
-        console.log(data);
-        this.user_id = data.sub;
-        console.log("this.user_id = " + this.user_id);
-    };
-
-    this.onGetUserInfoError = function (error) {
-        console.log(error);
-    };
-
+    /* this.getUserInfo = function () {
+     try {
+     console.log("getUserInfo => %s, %s, %s", this.username, this.host, this.realm);
+     console.log("this.access_token = " + this.access_token);
+     var host = this.host;
+     var realm = this.realm;
+     var accessToken = this.access_token;
+     var username = this.user_name;
+     console.log(host + "/realms/" + realm + "/protocol/openid-connect/userinfo");
+     var userInfoPromise = new Promise(function (resolve, reject) {
+     $.ajax({
+     //"http://192.168.1.150:8080/auth/video-app/realms/" + realm + "/users"
+     url: host + "/realms/" + realm + "/protocol/openid-connect/userinfo",
+     data: {username: username},
+     type: "GET",
+     beforeSend: function (xhr) {
+     xhr.setRequestHeader('Authorization', "Bearer " + accessToken);
+     },
+     success: function (data) {
+     //console.groupCollapsed("getUserInfo=>success");
+     //console.log(data);
+     //console.groupEnd();
+     resolve(data);
+     },
+     error: function () {
+     //console.groupCollapsed("getUserInfo=>error");
+     console.log("error %s", "ERROR");
+     //console.groupEnd();
+     reject();
+     }
+     });
+     });
+     userInfoPromise.then(result => {
+     this.onGetUserInfo(result);
+     },
+     error => {
+     this.onGetUserInfoError(error);
+     });
+     } catch (exception) {
+     console.error(exception);
+     }
+     };
+     
+     this.onGetUserInfo = function (data) {
+     console.log(data);
+     this.user_id = data.sub;
+     console.log("this.user_id = " + this.user_id);
+     };
+     
+     this.onGetUserInfoError = function (error) {
+     console.log(error);
+     };
+     */
     /**
      * Функция вызывается при успешной инициализации. Получает на вход ссылку на this
      * @param {type} data
@@ -355,9 +375,9 @@ function OpenIDConnect() {
     this.onConnect = function (data) {
         console.log("onConnect");
         console.log(data);
-        console.log(data.access_token);
-        
-        console.log(this);
+        //console.log(data.access_token);
+
+        //console.log(this);
     };
 
     /**
@@ -378,7 +398,7 @@ function OpenIDConnect() {
      * @returns {undefined}
      */
 
-    this.onRefreshToken = function (data) {
+    /*this.onRefreshToken = function (data) {
         console.log("onRefreshToken");
         console.log(data);
     };
@@ -388,10 +408,10 @@ function OpenIDConnect() {
      * @param {type} error
      * @returns {undefined}
      */
-    this.onRefreshTokenError = function (error) {
+    /*this.onRefreshTokenError = function (error) {
         console.log("onRefreshTokenError");
         console.log(error);
-    };
+    };*/
 
     //console.groupEnd();
 }
